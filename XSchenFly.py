@@ -21,12 +21,9 @@ from threading import Thread, Event, Lock
 from time import sleep
 
 import hid
-#import usb.core
-#import usb.backend.libusb1
-#import usb.util
 
-#import device
 import devices.winwing_mcdu
+import devices.winwing_fcu
 import XPlaneUdp
 
 class DrefType(Enum):
@@ -138,8 +135,19 @@ def main():
     xp.UDP_PORT = xp.BeaconData["Port"]
     print(f'waiting for X-Plane to connect on port {xp.BeaconData["Port"]}')
 
-    dev_winwing_mcdu = devices.winwing_mcdu.device(xp)
+    xp_mcdu = XPlaneUdp.XPlaneUdp()
+    xp_mcdu.BeaconData["IP"] = UDP_IP # workaround to set IP and port
+    xp_mcdu.BeaconData["Port"] = UDP_PORT
+    xp_mcdu.UDP_PORT = xp.BeaconData["Port"]
+    dev_winwing_mcdu = devices.winwing_mcdu.device(xp_mcdu)
     dev_winwing_mcdu.init_device(VERSION, new_version)
+
+    xp_fcu = XPlaneUdp.XPlaneUdp()
+    xp_fcu.BeaconData["IP"] = UDP_IP # workaround to set IP and port
+    xp_fcu.BeaconData["Port"] = UDP_PORT
+    xp_fcu.UDP_PORT = xp.BeaconData["Port"]
+    dev_winwing_fcu = devices.winwing_fcu.device(xp_fcu)
+    dev_winwing_fcu.init_device(VERSION, new_version)
 
     while True:
         if not xplane_connected:
@@ -150,19 +158,20 @@ def main():
                 print(f"X-Plane connected")
                 xplane_connected = True
                 dev_winwing_mcdu.connected()
+                dev_winwing_fcu.connected()
             except XPlaneUdp.XPlaneTimeout:
                 xplane_connected = False
                 sleep(1)
             continue
 
         try:
-            dev_winwing_mcdu.cyclic()
-            #values = xp.GetValues()
-            #values_processed.wait()
+            dev_winwing_mcdu.cyclic.set()
+            dev_winwing_fcu.cyclic.set()
         except XPlaneUdp.XPlaneTimeout:
             print(f'X-Plane timeout, could not connect on port {xp.BeaconData["Port"]}, waiting for X-Plane')
             xplane_connected = False
             dev_winwing_mcdu.disconnected()
+            dev_winwing_fcu.disconnected()
             sleep(2)
 
 if __name__ == '__main__':

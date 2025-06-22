@@ -595,7 +595,7 @@ def mcdu_create_events(xp, usb_mgr, display_mgr):
             if len(data_in) == 14: # we get this often but don't understand yet. May have someting to do with leds set
                 continue
             if len(data_in) != 25:
-                print(f'[MCDU] rx data count {len(data_in)} not valid')
+                print(f'[MCDU] rx data count {len(data_in)} not valid for {usb_mgr}')
                 continue
             #print(f"data_in: {data_in}")
 
@@ -890,6 +890,7 @@ class device:
     def __init__(self, xp):
         self.usb_mgr = None
         self.xp = xp
+        self.cyclic = Event()
 
 
     def connected(self):
@@ -910,12 +911,16 @@ class device:
         winwing_mcdu_set_leds(self.usb_mgr.device, Leds.FAIL, 1)
 
 
-    def cyclic(self):
+    def cyclic_worker(self):
         global value
         global device_config
         global values
-        values = self.xp.GetValues()
-        values_processed.wait()
+
+        print('cylic_worker')
+        while True:
+            self.cyclic.wait()
+            values = self.xp.GetValues()
+            values_processed.wait()
 
 
     def init_device(self, version: str = None, new_version: str = None):
@@ -937,4 +942,7 @@ class device:
 
         usb_event_thread = Thread(target=mcdu_create_events, args=[self.xp, self.usb_mgr, self.display_mgr])
         usb_event_thread.start()
+
+        cyclic_thread = Thread(target=self.cyclic_worker)
+        cyclic_thread.start()
 

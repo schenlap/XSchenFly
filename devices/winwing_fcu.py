@@ -340,7 +340,7 @@ def winwing_efisr_set_lcd(device, baro):
         usb_retry = False
     except Exception as error:
         usb_retry = True
-        print(f"error in commit data: {error}")
+        print(f"[FCU] error in commit data: {error}")
 
 
 def winwing_efisl_set_lcd(device, baro):
@@ -364,7 +364,7 @@ def winwing_efisl_set_lcd(device, baro):
         usb_retry = False
     except Exception as error:
         usb_retry = True
-        print(f"error in commit data: {error}")
+        print(f"[FCU] error in commit data: {error}")
 
 
 fcu_device = None # usb /dev/inputx device
@@ -828,6 +828,7 @@ class device:
     def __init__(self, xp):
         self.usb_mgr = None
         self.xp = xp
+        self.cyclic = Event()
 
 
     def connected(self):
@@ -843,12 +844,15 @@ class device:
         print(f"[FCU] X-Plane disconnected")
 
 
-    def cyclic(self):
+    def cyclic_worker(self):
         global value
         global device_config
         global values
-        values = self.xp.GetValues()
-        values_processed.wait()
+
+        while True:
+            self.cyclic.wait()            
+            values = self.xp.GetValues()
+            values_processed.wait()
 
 
     def init_device(self, version: str = None, new_version: str = None):
@@ -878,70 +882,12 @@ class device:
         winwing_fcu_set_leds(self.usb_mgr.device, leds, 80)
         winwing_fcu_set_lcd(self.usb_mgr.device, "   ", "   ", "Schen", " lap")
         if device_config & DEVICEMASK.EFISR:
-            winwing_efisr_set_lcd(self.usb_mgr, '----')
+            winwing_efisr_set_lcd(self.usb_mgr.device, '----')
         if device_config & DEVICEMASK.EFISL:
-            winwing_efisl_set_lcd(self.usb_mgr, '----')
+            winwing_efisl_set_lcd(self.usb_mgr.device, '----')
 
         usb_event_thread = Thread(target=fcu_create_events, args=[self.xp, self.usb_mgr])
         usb_event_thread.start()
 
-
-def main():
-
-    create_button_list_fcu()
-    datacache['baro_efisr_last'] = None
-    datacache['baro_efisl_last'] = None
-
-    fcu_out_endpoint = None #usb_mgr.device
-    fcu_in_endpoint = None #usb_mgr.device
-    
-    leds = [Leds.SCREEN_BACKLIGHT]
-    if device_config & DEVICEMASK.EFISR:
-      leds.append(Leds.EFISR_BACKLIGHT)
-    if device_config & DEVICEMASK.EFISL:
-      leds.append(Leds.EFISL_BACKLIGHT)
-
-    winwing_fcu_set_leds(fcu_out_endpoint, leds, 180)
-    winwing_fcu_set_leds(fcu_out_endpoint, leds, 80)
-    winwing_fcu_set_lcd(fcu_out_endpoint, "   ", "   ", "Schen", " lap")
-    if device_config & DEVICEMASK.EFISR:
-        winwing_efisr_set_lcd(fcu_out_endpoint, '----')
-    if device_config & DEVICEMASK.EFISL:
-        winwing_efisl_set_lcd(fcu_out_endpoint, '----')
-
-    usb_event_thread = Thread(target=fcu_create_events, args=[fcu_in_endpoint, fcu_out_endpoint])
-    usb_event_thread.start()
-
-    kb_quit_event_thread = Thread(target=kb_wait_quit_event)
-    kb_quit_event_thread.start()
-
-    return
-
-    while True:
-        if not xplane_connected:
-            try:
-                xp.AddDataRef("sim/aircraft/view/acf_tailnum")
-                values = xp.GetValues()
-                xplane_connected = True
-                print(f"X-Plane connected")
-                RequestDataRefs(xp)
-                xp.AddDataRef("sim/aircraft/view/acf_tailnum", 0)
-            except XPlaneUdp.XPlaneTimeout:
-                xplane_connected = False
-                sleep(2)
-                print(f"wait for X-Plane")
-            continue
-
-        try:
-            values = xp.GetValues()
-            values_processed.wait()
-            #print(values)
-            #values will be handled in fcu_create_events to write to usb only in one thread.
-            # see function set_datacache(values)
-        except XPlaneUdp.XPlaneTimeout:
-            print(f'X-Plane timeout, could not connect on port {xp.BeaconData["Port"]}')
-            xplane_connected = False
-            sleep(2)
-
-if __name__ == '__main__':
-  main() 
+        cyclic_thread = Thread(target=self.cyclic_worker)
+        cyclic_thread.start()
