@@ -1,19 +1,6 @@
-#!/usr/bin/env python3
-
-# IP Address of machine running X-Plane. 
-UDP_IP = "127.0.0.1"
-UDP_PORT = 49000
-
-import binascii
 from dataclasses import dataclass
 from enum import Enum, IntEnum
 import os
-import socket
-import struct
-
-#for raw usb
-#import re
-#import subprocess
 
 from threading import Thread, Event, Lock
 from time import sleep
@@ -226,14 +213,14 @@ def swap_nibbles(x):
 
 
 
-def winwing_fcu_set_leds(ep, leds, brightness):
+def winwing_fcu_set_leds(device, leds, brightness):
     if isinstance(leds, list):
         for i in range(len(leds)):
-            winwing_fcu_set_led(ep, leds[i], brightness)
+            winwing_fcu_set_led(device, leds[i], brightness)
     else:
-        winwing_fcu_set_led(ep, leds, brightness)
+        winwing_fcu_set_led(device, leds, brightness)
 
-def winwing_fcu_set_led(ep, led, brightness):
+def winwing_fcu_set_led(device, led, brightness):
     if led.value < 100: # FCU
         data = [0x02, 0x10, 0xbb, 0, 0, 3, 0x49, led.value, brightness, 0,0,0,0,0]
     elif led.value < 200 and device_config & DEVICEMASK.EFISR: # EFIS_R
@@ -242,7 +229,7 @@ def winwing_fcu_set_led(ep, led, brightness):
         data = [0x02, 0x0d, 0xbf, 0, 0, 3, 0x49, led.value - 200, brightness, 0,0,0,0,0]
     if 'data' in locals():
       cmd = bytes(data)
-      ep.write(cmd)
+      device.write(cmd)
 
 
 def lcd_init(ep):
@@ -303,7 +290,7 @@ def string_fix_length(v, l):
     return s.rjust(l, '0')
 
 
-def winwing_fcu_set_lcd(ep, speed, heading, alt, vs):
+def winwing_fcu_set_lcd(device, speed, heading, alt, vs):
     global usb_retry
     s = data_from_string( 3, string_fix_length(speed, 3))
     h = data_from_string_swapped(3, string_fix_length(heading, 3))
@@ -318,22 +305,22 @@ def winwing_fcu_set_lcd(ep, speed, heading, alt, vs):
     data = [0xf0, 0x0, pkg_nr, 0x31, 0x10, 0xbb, 0x0, 0x0, 0x2, 0x1, 0x0, 0x0, 0xff, 0xff, 0x2, 0x0, 0x0, 0x20, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, s[2], s[1] | bl[Byte.S1.value], s[0], h[3] | bl[Byte.H3.value], h[2], h[1], h[0] | bl[Byte.H0.value], a[5] | bl[Byte.A5.value], a[4] | bl[Byte.A4.value], a[3] | bl[Byte.A3.value], a[2] | bl[Byte.A2.value], a[1] | bl[Byte.A1.value], a[0] | v[4] | bl[Byte.A0.value], v[3] | bl[Byte.V3.value], v[2] | bl[Byte.V2.value], v[1] | bl[Byte.V1.value], v[0] | bl[Byte.V0.value], 0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]
     cmd = bytes(data)
     try:
-        ep.write(cmd)
+        device.write(cmd)
     except Exception as error:
         usb_retry = True
-        print(f"error in write data: {error}")
+        print(f"[FCU] error in write data: {error}")
 
     data = [0xf0, 0x0, pkg_nr, 0x11, 0x10, 0xbb, 0x0, 0x0, 0x3, 0x1, 0x0, 0x0, 0xff, 0xff, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]
     cmd = bytes(data)
     try:
-        ep.write(cmd)
+        device.write(cmd)
         usb_retry = False
     except Exception as error:
         usb_retry = True
-        print(f"error in commit data: {error}")
+        print(f"[FCU] error in commit data: {error}")
 
 
-def winwing_efisr_set_lcd(ep, baro):
+def winwing_efisr_set_lcd(device, baro):
     global usb_retry
     b = data_from_string_swapped_efis( 4, string_fix_length(baro, 4))
 
@@ -348,7 +335,7 @@ def winwing_efisr_set_lcd(ep, baro):
 
     cmd = bytes(data)
     try:
-        ep.write(cmd)
+        device.write(cmd)
         sleep(0.005)
         usb_retry = False
     except Exception as error:
@@ -356,7 +343,7 @@ def winwing_efisr_set_lcd(ep, baro):
         print(f"error in commit data: {error}")
 
 
-def winwing_efisl_set_lcd(ep, baro):
+def winwing_efisl_set_lcd(device, baro):
     global usb_retry
     b = data_from_string_swapped_efis( 4, string_fix_length(baro, 4))
 
@@ -371,7 +358,7 @@ def winwing_efisl_set_lcd(ep, baro):
 
     cmd = bytes(data)
     try:
-        ep.write(cmd)
+        device.write(cmd)
         sleep(0.005)
         
         usb_retry = False
@@ -412,9 +399,6 @@ datarefs = [
 
 buttons_press_event = [0] * BUTTONS_CNT
 buttons_release_event = [0] * BUTTONS_CNT
-
-fcu_out_endpoint = None
-fcu_in_endpoint = None
 
 usb_retry = False
 
@@ -539,6 +523,7 @@ def create_button_list_fcu():
 
 
 def RequestDataRefs(xp):
+    global datacache
     for idx,b in enumerate(buttonlist):
         datacache[b.dataref] = None
         if b.dreftype != DREF_TYPE.CMD and b.led != None:
@@ -554,7 +539,7 @@ def xor_bitmask(a, b, bitmask):
     return (a & bitmask) != (b & bitmask)
 
 
-def fcu_button_event():
+def fcu_button_event(xp):
     #print(f'events: press: {buttons_press_event}, release: {buttons_release_event}')
     for b in buttonlist:
         if not any(buttons_press_event) and not any(buttons_release_event):
@@ -613,7 +598,7 @@ def fcu_button_event():
                 xp.WriteDataRef(b.dataref, 0)
 
 
-def fcu_create_events(ep_in, ep_out):
+def fcu_create_events(xp, usb_mgr):
         global values
         sleep(2) # wait for values to be available
         buttons_last = 0
@@ -622,11 +607,11 @@ def fcu_create_events(ep_in, ep_out):
                 sleep(1)
                 continue
 
-            set_datacache(values)
+            set_datacache(usb_mgr, values)
             values_processed.set()
             sleep(0.005)
             try:
-                data_in = ep_in.read(0x81, 105)
+                data_in = usb_mgr.device.read(0x81, 105)
             except Exception as error:
                 print(f' *** continue after usb-in error: {error} ***')
                 continue
@@ -647,11 +632,11 @@ def fcu_create_events(ep_in, ep_out):
                         buttons_press_event[i] = 1
                     else:
                         buttons_release_event[i] = 1
-                    fcu_button_event()
+                    fcu_button_event(xp)
             buttons_last = buttons
 
 
-def set_button_led_lcd(dataref, v):
+def set_button_led_lcd(device, dataref, v):
     global led_brightness
     for b in buttonlist:
         if b.dataref == dataref:
@@ -661,15 +646,15 @@ def set_button_led_lcd(dataref, v):
                 v = 255
             print(f'led: {b.led}, value: {v}')
 
-            winwing_fcu_set_leds(fcu_out_endpoint, b.led, int(v))
+            winwing_fcu_set_leds(device, b.led, int(v))
             if b.led == Leds.BACKLIGHT:
-                winwing_fcu_set_led(fcu_out_endpoint, Leds.EXPED_YELLOW, int(v))
+                winwing_fcu_set_led(device, Leds.EXPED_YELLOW, int(v))
                 print(f'set led brigthness: {b.led}, value: {v}')
                 led_brightness = v
             break
 
 
-def set_datacache(values):
+def set_datacache(usb_mgr, values):
     global datacache
     global exped_led_state
 
@@ -699,7 +684,7 @@ def set_datacache(values):
             new = True
             print(f'cache: v:{v} val:{int(values[v])}')
             datacache[v] = int(values[v])
-            set_button_led_lcd(v, int(values[v]))
+            set_button_led_lcd(usb_mgr.device, v, int(values[v]))
     if new == True or usb_retry == True:
         speed = datacache['sim/cockpit2/autopilot/airspeed_dial_kts_mach']
         heading = datacache['sim/cockpit/autopilot/heading_mag']
@@ -752,9 +737,9 @@ def set_datacache(values):
                 exped_led_state_desired = False
             if exped_led_state_desired != exped_led_state:
                 exped_led_state = exped_led_state_desired
-                winwing_fcu_set_led(fcu_out_endpoint, Leds.EXPED_GREEN, led_brightness * exped_led_state_desired)
+                winwing_fcu_set_led(usb_mgr.device, Leds.EXPED_GREEN, led_brightness * exped_led_state_desired)
 
-        winwing_fcu_set_lcd(fcu_out_endpoint, speed, heading, alt, vs)
+        winwing_fcu_set_lcd(usb_mgr.device, speed, heading, alt, vs)
         sleep(0.05)
 
         if device_config & DEVICEMASK.EFISR:
@@ -770,7 +755,7 @@ def set_datacache(values):
             flags['efisr_hpa_dec'].value = not unit and not std
 
             if datacache['baro_efisr_last'] != baro:
-                winwing_efisr_set_lcd(fcu_out_endpoint, baro)
+                winwing_efisr_set_lcd(usb_mgr.device, baro)
                 sleep(0.05)
                 datacache['baro_efisr_last'] = baro
         if device_config & DEVICEMASK.EFISL:
@@ -786,7 +771,7 @@ def set_datacache(values):
             flags['efisl_hpa_dec'].value = not unit and not std
 
             if datacache['baro_efisl_last'] != baro:
-                winwing_efisl_set_lcd(fcu_out_endpoint, baro)
+                winwing_efisl_set_lcd(usb_mgr.device, baro)
                 sleep(0.05)
                 datacache['baro_efisl_last'] = baro
 
@@ -839,31 +824,76 @@ class UsbManager:
             print("not found")
         return None, None, 0
 
+class device:
+    def __init__(self, xp):
+        self.usb_mgr = None
+        self.xp = xp
+
+
+    def connected(self):
+        global xplane_connected
+        print(f"[FCU] X-Plane connected")
+        RequestDataRefs(self.xp)
+        xplane_connected = True
+
+
+    def disconnected(self):
+        global xplane_connected
+        xplane_connected = False
+        print(f"[FCU] X-Plane disconnected")
+
+
+    def cyclic(self):
+        global value
+        global device_config
+        global values
+        values = self.xp.GetValues()
+        values_processed.wait()
+
+
+    def init_device(self, version: str = None, new_version: str = None):
+        global values, xplane_connected
+        global device_config
+        global datacache
+
+        self.usb_mgr = UsbManager()
+        vid, pid, device_config = self.usb_mgr.find_device()
+
+        if pid is None:
+            exit(f" [FCU] No compatible winwing device found, quit")
+        else:
+            self.usb_mgr.connect_device(vid=vid, pid=pid)
+
+        create_button_list_fcu()
+        datacache['baro_efisr_last'] = None
+        datacache['baro_efisl_last'] = None
+    
+        leds = [Leds.SCREEN_BACKLIGHT]
+        if device_config & DEVICEMASK.EFISR:
+            leds.append(Leds.EFISR_BACKLIGHT)
+        if device_config & DEVICEMASK.EFISL:
+            leds.append(Leds.EFISL_BACKLIGHT)
+
+        winwing_fcu_set_leds(self.usb_mgr.device, leds, 180)
+        winwing_fcu_set_leds(self.usb_mgr.device, leds, 80)
+        winwing_fcu_set_lcd(self.usb_mgr.device, "   ", "   ", "Schen", " lap")
+        if device_config & DEVICEMASK.EFISR:
+            winwing_efisr_set_lcd(self.usb_mgr, '----')
+        if device_config & DEVICEMASK.EFISL:
+            winwing_efisl_set_lcd(self.usb_mgr, '----')
+
+        usb_event_thread = Thread(target=fcu_create_events, args=[self.xp, self.usb_mgr])
+        usb_event_thread.start()
+
 
 def main():
-    global xp
-    global fcu_in_endpoint, fcu_out_endpoint
-    global values, xplane_connected
-    global device_config
-
-    print(f"starting winwing_fcu, {VERSION}")
-
-    usb_mgr = UsbManager()
-    vid, pid, device_config = usb_mgr.find_device()
-
-    if pid is None:
-        exit(f"No compatible winwing device found, quit")
-    else:
-        usb_mgr.connect_device(vid=vid, pid=pid)
-
-    print('compatible with X-Plane 11/12 and all Toliss Airbus')
 
     create_button_list_fcu()
     datacache['baro_efisr_last'] = None
     datacache['baro_efisl_last'] = None
 
-    fcu_out_endpoint = usb_mgr.device
-    fcu_in_endpoint = usb_mgr.device
+    fcu_out_endpoint = None #usb_mgr.device
+    fcu_in_endpoint = None #usb_mgr.device
     
     leds = [Leds.SCREEN_BACKLIGHT]
     if device_config & DEVICEMASK.EFISR:
@@ -885,11 +915,7 @@ def main():
     kb_quit_event_thread = Thread(target=kb_wait_quit_event)
     kb_quit_event_thread.start()
 
-    xp = XPlaneUdp.XPlaneUdp()
-    xp.BeaconData["IP"] = UDP_IP # workaround to set IP and port
-    xp.BeaconData["Port"] = UDP_PORT
-    xp.UDP_PORT = xp.BeaconData["Port"]
-    print(f'wait for X-Plane to connect on port {xp.BeaconData["Port"]}')
+    return
 
     while True:
         if not xplane_connected:
