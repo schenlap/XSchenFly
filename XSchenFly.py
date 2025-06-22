@@ -21,11 +21,12 @@ from threading import Thread, Event, Lock
 from time import sleep
 
 import hid
-import usb.core
-import usb.backend.libusb1
-import usb.util
+#import usb.core
+#import usb.backend.libusb1
+#import usb.util
 
-
+#import device
+import devices.winwing_mcdu
 import XPlaneUdp
 
 class DrefType(Enum):
@@ -137,6 +138,9 @@ def main():
     xp.UDP_PORT = xp.BeaconData["Port"]
     print(f'waiting for X-Plane to connect on port {xp.BeaconData["Port"]}')
 
+    dev_winwing_mcdu = devices.winwing_mcdu.device(xp)
+    dev_winwing_mcdu.init_device(VERSION, new_version)
+
     while True:
         if not xplane_connected:
             try:
@@ -145,17 +149,20 @@ def main():
 
                 print(f"X-Plane connected")
                 xplane_connected = True
+                dev_winwing_mcdu.connected()
             except XPlaneUdp.XPlaneTimeout:
                 xplane_connected = False
                 sleep(1)
             continue
 
         try:
-            values = xp.GetValues()
+            dev_winwing_mcdu.cyclic()
+            #values = xp.GetValues()
             #values_processed.wait()
         except XPlaneUdp.XPlaneTimeout:
             print(f'X-Plane timeout, could not connect on port {xp.BeaconData["Port"]}, waiting for X-Plane')
             xplane_connected = False
+            dev_winwing_mcdu.disconnected()
             sleep(2)
 
 if __name__ == '__main__':
