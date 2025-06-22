@@ -146,6 +146,7 @@ representations = {
     '/' : 0x60,
     '\\' : 0xa0,
     ' ' : 0x00,
+    '.' : 0x10,
 }
 
 class Byte(Enum):
@@ -527,10 +528,10 @@ def RequestDataRefs(xp):
     for idx,b in enumerate(buttonlist):
         datacache[b.dataref] = None
         if b.dreftype != DREF_TYPE.CMD and b.led != None:
-            print(f"register dataref {b.dataref}")
+            print(f"[FCU] dataref {b.dataref}")
             xp.AddDataRef(b.dataref, 3)
     for d in datarefs:
-        print(f"register dataref {d[0]}")
+        print(f"[FCU] register dataref {d[0]}")
         datacache[d[0]] = None
         xp.AddDataRef(d[0], d[1])
 
@@ -776,12 +777,21 @@ def set_datacache(usb_mgr, values):
                 datacache['baro_efisl_last'] = baro
 
 
-def kb_wait_quit_event():
-    print(f"*** Press ENTER to quit this script ***\n")
-    while True:
-        c = input() # wait for ENTER (not worth to implement kbhit for differnt plattforms, so make it very simple)
-        print(f"Exit")
-        os._exit(0)
+def startupscreen(device, device_config, version, new_version):
+    leds = [Leds.SCREEN_BACKLIGHT, Leds.BACKLIGHT]
+    if device_config & DEVICEMASK.EFISR:
+        leds.append(Leds.EFISR_BACKLIGHT)
+        leds.append(Leds.EFISR_SCREEN_BACKLIGHT)
+    if device_config & DEVICEMASK.EFISL:
+        leds.append(Leds.EFISL_BACKLIGHT)
+        leds.append(Leds.EFISL_SCREEN_BACKLIGHT)
+
+    winwing_fcu_set_leds(device, leds, 80)
+    winwing_fcu_set_lcd(device, version[1:], "   ", "Schen", " lap")
+    if device_config & DEVICEMASK.EFISR:
+        winwing_efisr_set_lcd(device, '----')
+    if device_config & DEVICEMASK.EFISL:
+        winwing_efisl_set_lcd(device, '----')
 
 
 class UsbManager:
@@ -825,10 +835,15 @@ class UsbManager:
         return None, None, 0
 
 class device:
-    def __init__(self, xp):
+    def __init__(self, UDP_IP, UDP_PORT):
         self.usb_mgr = None
         self.xp = xp
         self.cyclic = Event()
+
+        self.xp = XPlaneUdp.XPlaneUdp()
+        self.xp.BeaconData["IP"] = UDP_IP # workaround to set IP and port
+        self.xp.BeaconData["Port"] = UDP_PORT
+        self.xp.UDP_PORT = self.xp.BeaconData["Port"]
 
 
     def connected(self):
@@ -842,6 +857,7 @@ class device:
         global xplane_connected
         xplane_connected = False
         print(f"[FCU] X-Plane disconnected")
+        startupscreen(self.usb_mgr.device, device_config, self.version, self.new_version)
 
 
     def cyclic_worker(self):
@@ -849,10 +865,14 @@ class device:
         global device_config
         global values
 
+        self.cyclic.wait()
         while True:
-            self.cyclic.wait()            
-            values = self.xp.GetValues()
-            values_processed.wait()
+            try:
+                values = self.xp.GetValues()
+                values_processed.wait()
+            except XPlaneUdp.XPlaneTimeout:
+                sleep(1)
+                continue
 
 
     def init_device(self, version: str = None, new_version: str = None):
@@ -872,19 +892,7 @@ class device:
         datacache['baro_efisr_last'] = None
         datacache['baro_efisl_last'] = None
     
-        leds = [Leds.SCREEN_BACKLIGHT]
-        if device_config & DEVICEMASK.EFISR:
-            leds.append(Leds.EFISR_BACKLIGHT)
-        if device_config & DEVICEMASK.EFISL:
-            leds.append(Leds.EFISL_BACKLIGHT)
-
-        winwing_fcu_set_leds(self.usb_mgr.device, leds, 180)
-        winwing_fcu_set_leds(self.usb_mgr.device, leds, 80)
-        winwing_fcu_set_lcd(self.usb_mgr.device, "   ", "   ", "Schen", " lap")
-        if device_config & DEVICEMASK.EFISR:
-            winwing_efisr_set_lcd(self.usb_mgr.device, '----')
-        if device_config & DEVICEMASK.EFISL:
-            winwing_efisl_set_lcd(self.usb_mgr.device, '----')
+        startupscreen(self.usb_mgr.device, device_config, version, new_version)
 
         usb_event_thread = Thread(target=fcu_create_events, args=[self.xp, self.usb_mgr])
         usb_event_thread.start()

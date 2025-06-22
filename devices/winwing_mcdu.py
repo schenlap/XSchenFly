@@ -6,6 +6,8 @@ from time import sleep
 
 import hid
 
+import XPlaneUdp
+
 BUTTONS_CNT = 99 # TODO
 PAGE_LINES = 14 # Header + 6 * label + 6 * cont + textbox
 PAGE_CHARS_PER_LINE = 24
@@ -887,10 +889,14 @@ class UsbManager:
 
 
 class device:
-    def __init__(self, xp):
+    def __init__(self, UDP_IP, UDP_PORT):
         self.usb_mgr = None
-        self.xp = xp
         self.cyclic = Event()
+
+        self.xp = XPlaneUdp.XPlaneUdp()
+        self.xp.BeaconData["IP"] = UDP_IP # workaround to set IP and port
+        self.xp.BeaconData["Port"] = UDP_PORT
+        self.xp.UDP_PORT = self.xp.BeaconData["Port"]
 
 
     def connected(self):
@@ -909,6 +915,7 @@ class device:
         xplane_connected = False
         print(f"[MCDU] X-Plane disconnected")
         winwing_mcdu_set_leds(self.usb_mgr.device, Leds.FAIL, 1)
+        self.display_mgr.startupscreen(self.version, self.new_version)
 
 
     def cyclic_worker(self):
@@ -916,16 +923,22 @@ class device:
         global device_config
         global values
 
-        print('cylic_worker')
+        self.cyclic.wait()
         while True:
-            self.cyclic.wait()
-            values = self.xp.GetValues()
-            values_processed.wait()
+            try:
+                values = self.xp.GetValues()
+                values_processed.wait()
+            except XPlaneUdp.XPlaneTimeout:
+                sleep(1)
+                continue
 
 
     def init_device(self, version: str = None, new_version: str = None):
         global values, xplane_connected
         global device_config
+
+        self.version = version
+        self.new_version = new_version
 
         self.usb_mgr = UsbManager()
         vid, pid, device_config = self.usb_mgr.find_device()
@@ -936,7 +949,7 @@ class device:
             self.usb_mgr.connect_device(vid=vid, pid=pid)
 
         self.display_mgr = DisplayManager(self.usb_mgr.device)
-        self.display_mgr.startupscreen(new_version)
+        self.display_mgr.startupscreen(self.version, self.new_version)
 
         create_button_list_mcdu()
 
