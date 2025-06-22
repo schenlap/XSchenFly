@@ -1,25 +1,10 @@
-import binascii
 from dataclasses import dataclass
 from enum import Enum, IntEnum
-import os
-import requests
-import socket
-import struct
 
-#for raw usb
-import re
-import subprocess
-
-from threading import Thread, Event, Lock
+from threading import Thread, Event
 from time import sleep
 
 import hid
-#import usb.core
-#import usb.backend.libusb1
-#import usb.util
-
-
-import XPlaneUdp
 
 BUTTONS_CNT = 99 # TODO
 PAGE_LINES = 14 # Header + 6 * label + 6 * cont + textbox
@@ -545,45 +530,45 @@ def mcdu_button_event(xp):
                     print(f'set dataref {b.dataref} from {bool(val)} to {not bool(val)}')
                     xp.WriteDataRef(b.dataref, not bool(val))
                 elif b.dreftype== DrefType.CMD:
-                    print(f'send command {b.dataref}')
+                    print(f'[MCDU] send command {b.dataref}')
                     xp.SendCommand(b.dataref)
             elif b.type == ButtonType.SWITCH:
                 val = datacache[b.dataref]
                 if b.dreftype== DrefType.DATA:
-                    print(f'set dataref {b.dataref} to 1')
+                    print(f'[MCDU] set dataref {b.dataref} to 1')
                     xp.WriteDataRef(b.dataref, 1)
                 elif b.dreftype== DrefType.CMD:
-                    print(f'send command {b.dataref}')
+                    print(f'[MCDU] send command {b.dataref}')
                     xp.SendCommand(b.dataref)
             elif b.type == ButtonType.SEND_0:
                 if b.dreftype== DrefType.DATA:
-                    print(f'set dataref {b.dataref} to 0')
+                    print(f'[MCDU] set dataref {b.dataref} to 0')
                     xp.WriteDataRef(b.dataref, 0)
             elif b.type == ButtonType.SEND_1:
                 if b.dreftype== DrefType.DATA:
-                    print(f'set dataref {b.dataref} to 1')
+                    print(f'[MCDU] set dataref {b.dataref} to 1')
                     xp.WriteDataRef(b.dataref, 1)
             elif b.type == ButtonType.SEND_2:
                 if b.dreftype== DrefType.DATA:
-                    print(f'set dataref {b.dataref} to 2')
+                    print(f'[MCDU] set dataref {b.dataref} to 2')
                     xp.WriteDataRef(b.dataref, 2)
             elif b.type == ButtonType.SEND_3:
                 if b.dreftype== DrefType.DATA:
-                    print(f'set dataref {b.dataref} to 3')
+                    print(f'[MCDU] set dataref {b.dataref} to 3')
                     xp.WriteDataRef(b.dataref, 3)
             elif b.type == ButtonType.SEND_4:
                 if b.dreftype== DrefType.DATA:
-                    print(f'set dataref {b.dataref} to 4')
+                    print(f'[MCDU] set dataref {b.dataref} to 4')
                     xp.WriteDataRef(b.dataref, 4)
             elif b.type == ButtonType.SEND_5:
                 if b.dreftype== DrefType.DATA:
-                    print(f'set dataref {b.dataref} to 5')
+                    print(f'[MCDU] set dataref {b.dataref} to 5')
                     xp.WriteDataRef(b.dataref, 5)
             else:
-                print(f'no known button type for button {b.label}')
+                print(f'[MCDU] no known button type for button {b.label}')
         if buttons_release_event[b.id]:
             buttons_release_event[b.id] = 0
-            print(f'button {b.label} released')
+            print(f'[MCDU] button {b.label} released')
             if b.type == ButtonType.SWITCH:
                 xp.WriteDataRef(b.dataref, 0)
 
@@ -604,13 +589,13 @@ def mcdu_create_events(xp, usb_mgr, display_mgr):
             try:
                 data_in = usb_mgr.device.read(0x81, 25)
             except Exception as error:
-                print(f' *** continue after usb-in error: {error} ***') # TODO
+                print(f'[MCDU]  *** continue after usb-in error: {error} ***') # TODO
                 sleep(0.5) # TODO remove
                 continue
             if len(data_in) == 14: # we get this often but don't understand yet. May have someting to do with leds set
                 continue
             if len(data_in) != 25:
-                print(f'rx data count {len(data_in)} not valid')
+                print(f'[MCDU] rx data count {len(data_in)} not valid')
                 continue
             #print(f"data_in: {data_in}")
 
@@ -837,6 +822,7 @@ def set_datacache(usb_mgr, display_mgr, values):
             display_mgr.set_from_page(page_tmp, vertslew_key)
         sleep(0.05)
 
+
 def colorname_from_char(c):
     c = c.lower()
     if c == 'w': return 'white'
@@ -851,14 +837,6 @@ def colorname_from_char(c):
     if c == ' ': return 'white'
     print(f"color-code {c} not known")
     return 'white'
-
-
-def kb_wait_quit_event():
-    print(f"*** Press ENTER to quit this script ***\n")
-    while True:
-        c = input() # wait for ENTER (not worth to implement kbhit for differnt plattforms, so make it very simple)
-        print(f"Exit")
-        os._exit(0)
 
 
 class UsbManager:
@@ -916,12 +894,12 @@ class device:
 
     def connected(self):
         global xplane_connected
-        xplane_connected = True
         print(f"[MCDU] X-Plane connected")
         self.display_mgr.write_line_to_page(8, 1, 'registering datarefs', 'G')
         self.display_mgr.set_from_page()
         RequestDataRefs(self.xp, device_config)
         winwing_mcdu_set_leds(self.usb_mgr.device, Leds.FAIL, 0)
+        xplane_connected = True
         page[0][0] = 'X' # force redraw
 
 
@@ -960,45 +938,3 @@ class device:
         usb_event_thread = Thread(target=mcdu_create_events, args=[self.xp, self.usb_mgr, self.display_mgr])
         usb_event_thread.start()
 
-        kb_quit_event_thread = Thread(target=kb_wait_quit_event)
-        kb_quit_event_thread.start()
-
-        #print(f'waiting for X-Plane to connect on port {xp.BeaconData["Port"]}')
-        #winwing_mcdu_set_leds(usb_mgr.device, Leds.FAIL, 1)
-        return
-
-        while True:
-            if not xplane_connected:
-                try:
-                    xp.AddDataRef("sim/aircraft/view/acf_tailnum")
-                    values = xp.GetValues()
-        
-                    print(f"X-Plane connected")
-                    display_mgr.write_line_to_page(8, 1, 'registering datarefs', 'G')
-                    display_mgr.set_from_page()
-                    RequestDataRefs(xp, device_config)
-                    xp.AddDataRef("sim/aircraft/view/acf_tailnum", 0)
-                    winwing_mcdu_set_leds(usb_mgr.device, Leds.FAIL, 0)
-                    xplane_connected = True
-                    page[0][0] = 'X' # force redraw
-                except XPlaneUdp.XPlaneTimeout:
-                    winwing_mcdu_set_leds(usb_mgr.device, Leds.FAIL, 1)
-                    xplane_connected = False
-                    sleep(1)
-                continue
-
-            try:
-                values = xp.GetValues()
-                values_processed.wait()
-                #print(values)
-                #values will be handled in mcdu_create_events to write to usb only in one thread.
-                # see function set_datacache(values)
-            except XPlaneUdp.XPlaneTimeout:
-                print(f'X-Plane timeout, could not connect on port {xp.BeaconData["Port"]}, waiting for X-Plane')
-                winwing_mcdu_set_leds(usb_mgr.device, Leds.FAIL, 1)
-                display_mgr.startupscreen(new_version)
-                xplane_connected = False
-                sleep(2)
-
-if __name__ == '__main__':
-  main() 
