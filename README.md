@@ -1,5 +1,5 @@
-# winwing_mcdu
-Use winwing mcdu on Linuc and Mac for X-Plane Toliss Airbus.
+# XSchenFly
+Use winwing mcdu / fcu / efis-l / efis-r on Linuc and Mac for X-Plane Toliss Airbus.
 
 ## Status
 The scripts fetsches all necessery data from mcdu and displays a mcdu unit in the console and prints all text on winwing mcdu. 
@@ -32,10 +32,10 @@ For Discussions use https://forums.x-plane.org/forums/topic/324814-winwing-mcdu-
 `python3 -m pip install requests`
 5. brew install hidapi
 6. let hid find hidapi: `ln -s /opt/homebrew/lib/libhidapi.dylib .`
-7. start script with sudo: `sudo python3 ./winwing_mcdu.py` when X-Plane with Toliss aircraft is loaded.
+7. start script with: `python3 ./XSchnFly.py` when X-Plane with Toliss aircraft is loaded.
 
 
-## Use MCDU
+## Use
 1. start X-Plane
 2. enable incoming traffic in settings / network (at the very bottom of the page)
 3. load Toliss A319
