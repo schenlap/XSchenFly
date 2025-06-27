@@ -806,13 +806,13 @@ class UsbManager:
             self.device = hid.device()
             self.device.open(vid, pid)
         except AttributeError as e:
-            print("using hidapi mac version")
+            print("[FCU] using hidapi mac version")
             self.device = hid.Device(vid=vid, pid=pid)
 
         if self.device is None:
             raise RuntimeError("Device not found")
 
-        print("Device connected.")
+        print("[FCU] Device connected.")
 
     def find_device(self):
         device_config = 0
@@ -824,7 +824,7 @@ class UsbManager:
         ]
 
         for d in devlist:
-            print(f"now searching for winwing {d['name']} ... ", end='')
+            print(f"[FCU] now searching for winwing {d['name']} ... ", end='')
             found = False
             for dev in hid.enumerate():
                 if dev['vendor_id'] == d['vid'] and dev['product_id'] == d['pid']:
@@ -879,6 +879,9 @@ class device:
         global values, xplane_connected
         global device_config
         global datacache
+
+        self.version = version
+        self.new_version = new_version
 
         self.usb_mgr = UsbManager()
         vid, pid, device_config = self.usb_mgr.find_device()
