@@ -19,20 +19,20 @@ For Discussions use https://forums.x-plane.org/forums/topic/324814-winwing-mcdu-
 `sudo cp udev/71-winwing.rules /etc/udev/rules.d/`
 3. install dependencies (on debian based systems)  
 `sudo aptitide install python3-hid libhidapi-hidraw0`
-5. start script (with udev rule no sudo needed): `python3 ./winwing_mcdu.py` when X-Plane with Toliss aircraft is loaded.
+5. start script (with udev rule no sudo needed): `python3 ./XSchenFly.py` when X-Plane with Toliss aircraft is loaded.
 
 
 #### MAC-OS
 
 1. clone the repo where you want
-2. change into the directory `cd winwing_mcdu`
+2. change into the directory `cd XSchenFly`
 3. install homebrew
 4. install dependencies
 `python3 -m pip install hid`
 `python3 -m pip install requests`
 5. brew install hidapi
 6. let hid find hidapi: `ln -s /opt/homebrew/lib/libhidapi.dylib .`
-7. start script with: `python3 ./XSchnFly.py` when X-Plane with Toliss aircraft is loaded.
+7. start script with: `python3 ./XSchenFly.py` when X-Plane with Toliss aircraft is loaded.
 
 
 ## Use
@@ -47,7 +47,7 @@ For Discussions use https://forums.x-plane.org/forums/topic/324814-winwing-mcdu-
 See [documention](./documentation/README.md) for developers. TODO
 
 ## Notes
-Use at your own risk. Updates to the MCDU can make the script incompatible.
+Use at your own risk. Updates to the winwing devices can make the script incompatible.
 TODO: The data sent in the USB protocol by SimApp Pro has not yet been fully implemented, only to the extent that it currently works.
 
 ## Next steps
