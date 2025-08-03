@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum, IntEnum
-import os
 
 from threading import Thread, Event, Lock
 from time import sleep
@@ -887,7 +886,8 @@ class device:
         vid, pid, device_config = self.usb_mgr.find_device()
 
         if pid is None:
-            exit(f" [FCU] No compatible winwing device found, quit")
+            print(f" [FCU] No compatible winwing device found, quit")
+            return
         else:
             self.usb_mgr.connect_device(vid=vid, pid=pid)
 

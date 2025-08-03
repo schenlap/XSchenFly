@@ -944,7 +944,8 @@ class device:
         vid, pid, device_config = self.usb_mgr.find_device()
 
         if pid is None:
-            exit(f" [MCDU] No compatible winwing device found, quit")
+            print(f" [MCDU] No compatible winwing device found, quit")
+            return
         else:
             self.usb_mgr.connect_device(vid=vid, pid=pid)
 
