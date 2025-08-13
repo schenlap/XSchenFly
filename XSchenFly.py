@@ -24,6 +24,7 @@ import hid
 
 import devices.winwing_mcdu
 import devices.winwing_fcu
+import devices.rowsfire_a107
 import XPlaneUdp
 
 class DrefType(Enum):
@@ -140,6 +141,9 @@ def main():
 
     dev_winwing_fcu = devices.winwing_fcu.device(UDP_IP, UDP_PORT)
     dev_winwing_fcu.init_device(VERSION, new_version)
+
+    #dev_rowsfire_a107 = devices.rowsfire_a107.device(UDP_IP, UDP_PORT)
+    #dev_rowsfire_a107.init_device(VERSION, new_version)
 
     while True:
         if not xplane_connected:
