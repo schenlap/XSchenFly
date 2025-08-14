@@ -51,6 +51,10 @@ class DREF_TYPE(Enum):
     DATA = 0
     CMD = 1
     NONE = 2 # for testing
+    ARRAY_0 = 10 # element [0]
+    ARRAY_1 = 11 # element [1]
+    ARRAY_2 = 12 # element [2]
+    ARRAY_3 = 13 # element [3]
 
 
 class Button:
@@ -65,10 +69,11 @@ class Button:
         self.led = led
 
 class Led:
-    def __init__(self, nr, label, dataref):
+    def __init__(self, nr, label, dataref, dreftype = DREF_TYPE.NONE):
         self.id = nr
         self.label = label
         self.dataref = dataref
+        self.dreftype = dreftype
 
 xplane_connected = False
 buttonlist = []
@@ -149,6 +154,9 @@ xp_dataref_ids = {}
 def create_led_list_a107():
     ledlist.append(Led(0, "APU_MASTER_LED", "AirbusFBW/APUMaster"))
     ledlist.append(Led(1, "APU_STARTER_LED", "AirbusFBW/APUStarter"))
+    ledlist.append(Led(2, "ADIRS_ON_BAT_LED", "AirbusFBW/ADIRUOnBat"))
+    ledlist.append(Led(3, "GPWS_FLAP3_LED", "AirbusFBW/GPWSSwitchArray", DREF_TYPE.ARRAY_3))
+    ledlist.append(Led(4, "GPWS_FLAP_MODE_LED", "AirbusFBW/GPWSSwitchArray", DREF_TYPE.ARRAY_2))
 
 
 def create_button_list_a107():
@@ -267,7 +275,18 @@ def get_dataref_id():
             print(xpdr_code_response)
             return
         print(f'name: {l.label}, id: {xpdr_code_response.json()["data"][0]["id"]}')
-        xp_dataref_ids[xpdr_code_response.json()["data"][0]["id"]] = l
+        if xpdr_code_response.json()["data"][0]["id"] in xp_dataref_ids:
+            print(f"[A107] INFO: Object dataref alread registered")
+            continue
+        if l.dreftype.value >= DREF_TYPE.ARRAY_0.value:
+            larray = []
+            for l2 in ledlist:
+                if l2.dataref == l.dataref:
+                    larray.append(l2)
+            xp_dataref_ids[xpdr_code_response.json()["data"][0]["id"]] = larray.copy()
+            print(f"[A107] ARRAY in ids {larray}")
+        else:
+            xp_dataref_ids[xpdr_code_response.json()["data"][0]["id"]] = l
 
 
 async def xplane_ws_listener():
@@ -309,16 +328,27 @@ async def xplane_ws_listener():
                         print(f"[A107] searching for {ref_id}...", end='')
                         if ref_id in xp_dataref_ids:
                             ledobj = xp_dataref_ids[ref_id]
-                            print(f" found: {ledobj.label}")
-                            #if type(switch) is list:
-                            #    idx = 0
+
+                            if type(value) is list:
+                                if type(ledobj) != list:
+                                    print("")
+                                    print(f"[A107] ERROR: led array dataref not registered as list!")
+                                    exit()
+                                print(f"") # end line
+                                idx = 0
+                                for v in value:
+                                    for l2 in ledobj: # we received an array, send update to all objects
+                                        if idx == l2.dreftype.value - DREF_TYPE.ARRAY_0.value:
+                                            print(f"[A107]                       array value[{idx}] of {l2.label} = {value[idx]}")
+                                    idx += 1
                             #    for s in switch:
                             #        value2 = value[LICHTER[0][2][idx]]
                             #        print(f"value: {value2}")
                             #        s.value = bool(value2)
                             #        s.update()
                             #        idx =idx + 1
-                            #else:
+                            else:
+                                print(f" found: {ledobj.label} = {value}")
                             #switch.value = bool(value)
                             #switch.update()
                         else:
