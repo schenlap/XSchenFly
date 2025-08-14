@@ -77,11 +77,12 @@ class Button:
         self.led = led
 
 class Led:
-    def __init__(self, nr, label, dataref, dreftype = DREF_TYPE.NONE):
+    def __init__(self, nr, label, dataref, dreftype = DREF_TYPE.NONE, eval = None):
         self.id = nr
         self.label = label
         self.dataref = dataref
         self.dreftype = dreftype
+        self.eval = eval
 
 xplane_connected = False
 buttonlist = []
@@ -164,43 +165,43 @@ def create_led_list_a107():
     ledlist.append(Led(1, "APU_MASTER_FAULT_LED", None))
     ledlist.append(Led(2, "APU_STARTER_ON_LED", "AirbusFBW/APUStarter"))
     ledlist.append(Led(3, "APU_STARTER_AVAIL_LED", "AirbusFBW/APUAvail"))
-    ledlist.append(Led(4, "APU_GEN_OFF_LED", "AirbusFBW/APUGenOHPArray", DREF_TYPE.ARRAY_0)) # TODO invers
+    ledlist.append(Led(4, "APU_GEN_OFF_LED", "AirbusFBW/APUGenOHPArray", DREF_TYPE.ARRAY_0, "==0"))
     ledlist.append(Led(5, "AIR_APU_BLEED_ON_LED", "AirbusFBW/APUBleedSwitch"))
     ledlist.append(Led(6, "AIR_APU_BLEED_FAULT_LED", None))
-    ledlist.append(Led(7, "AIR_PACK1_BLEED_OFF_LED", "AirbusFBW/Pack1Switch")) # TODO invers
+    ledlist.append(Led(7, "AIR_PACK1_BLEED_OFF_LED", "AirbusFBW/Pack1Switch", DREF_TYPE.DATA, "==0"))
     ledlist.append(Led(8, "AIR_PACK1_BLEED_FAULT_LED", None))
-    ledlist.append(Led(9, "AIR_PACK2_BLEED_OFF_LED", "AirbusFBW/Pack2Switch")) # TODO invers
+    ledlist.append(Led(9, "AIR_PACK2_BLEED_OFF_LED", "AirbusFBW/Pack2Switch", DREF_TYPE.DATA, "==0"))
     ledlist.append(Led(10, "AIR_PACK2_BLEED_FAULT_LED", None))
     ledlist.append(Led(11, "ADIRS_ON_BAT_LED", "AirbusFBW/ADIRUOnBat"))
     ledlist.append(Led(12, "GPWS_FLAP3_ON_LED", "AirbusFBW/GPWSSwitchArray", DREF_TYPE.ARRAY_3))
     ledlist.append(Led(13, "RCDR_GND_CTL_ON_LED", "AirbusFBW/CvrGndCtrl"))
-    ledlist.append(Led(14, "OXYGEN_CREW_SUPPLY_OFF_LED", "AirbusFBW/CrewOxySwitch")) # TODO invers
+    ledlist.append(Led(14, "OXYGEN_CREW_SUPPLY_OFF_LED", "AirbusFBW/CrewOxySwitch", DREF_TYPE.DATA, "==0"))
     ledlist.append(Led(15, "ANTIICE_WING_ON_LED", None))
     ledlist.append(Led(16, "ANTIICE_WING_FAULT_LED", None))
     ledlist.append(Led(17, "ANTIICE_ENG1_ON_LED", None))
     ledlist.append(Led(18, "ANTIICE_ENG1_FAULT_LED", None))
     ledlist.append(Led(19, "ANTIICE_ENG2_ON_LED", None))
     ledlist.append(Led(20, "ANTIICE_ENG2_FAULT_LED", None))
-    ledlist.append(Led(21, "ELEC_BAT1_OFF_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0)) # .. 1
-    ledlist.append(Led(22, "ELEC_BAT1_FAULT_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0)) # .. 3
-    ledlist.append(Led(23, "ELEC_BAT2_OFF_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_1)) # .. 1
-    ledlist.append(Led(24, "ELEC_BAT2_FAULT_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_1)) # .. 3
-    ledlist.append(Led(25, "ELEC_EXT_PWR_AVAIL_LED", "AirbusFBW/ExtPowOHPArray", DREF_TYPE.ARRAY_0)) # .. 2
-    ledlist.append(Led(26, "ELEC_EXT_PWR_ON_LED", "AirbusFBW/ExtPowOHPArray", DREF_TYPE.ARRAY_0)) # .. 1
-    ledlist.append(Led(27, "FUEL_L_PUMP1_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_0)) # .. 1
-    ledlist.append(Led(28, "FUEL_L_PUMP1_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_0)) # .. 3
-    ledlist.append(Led(29, "FUEL_L_PUMP2_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_1)) # .. 1
-    ledlist.append(Led(30, "FUEL_L_PUMP2_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_1)) # .. 3
-    ledlist.append(Led(31, "FUEL_PUMP1_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_2)) # .. 1
-    ledlist.append(Led(32, "FUEL_PUMP1_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_2)) # .. 3
-    ledlist.append(Led(31, "FUEL_PUMP2_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_3)) # .. 1
-    ledlist.append(Led(32, "FUEL_PUMP2_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_3)) # .. 3
-    ledlist.append(Led(33, "FUEL_R_PUMP1_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_4)) # .. 1
-    ledlist.append(Led(34, "FUEL_R_PUMP1_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_4)) # .. 3
-    ledlist.append(Led(35, "FUEL_R_PUMP2_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_5)) # .. 1
-    ledlist.append(Led(36, "FUEL_R_PUMP2_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_5)) # .. 3
-    ledlist.append(Led(37, "FUEL_MODE_SEL_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_6)) # .. 3
-    ledlist.append(Led(38, "FUEL_MODE_SEL_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_6)) # .. 3
+    ledlist.append(Led(21, "ELEC_BAT1_OFF_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0, "==1"))
+    ledlist.append(Led(22, "ELEC_BAT1_FAULT_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0, "==3"))
+    ledlist.append(Led(23, "ELEC_BAT2_OFF_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_1, "==1"))
+    ledlist.append(Led(24, "ELEC_BAT2_FAULT_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_1, "==3"))
+    ledlist.append(Led(25, "ELEC_EXT_PWR_AVAIL_LED", "AirbusFBW/ExtPowOHPArray", DREF_TYPE.ARRAY_0, "==2"))
+    ledlist.append(Led(26, "ELEC_EXT_PWR_ON_LED", "AirbusFBW/ExtPowOHPArray", DREF_TYPE.ARRAY_0, "==1"))
+    ledlist.append(Led(27, "FUEL_L_PUMP1_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_0, "==1"))
+    ledlist.append(Led(28, "FUEL_L_PUMP1_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_0, "==3"))
+    ledlist.append(Led(29, "FUEL_L_PUMP2_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_1, "==1"))
+    ledlist.append(Led(30, "FUEL_L_PUMP2_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_1, "==3"))
+    ledlist.append(Led(31, "FUEL_PUMP1_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_2, "==1"))
+    ledlist.append(Led(32, "FUEL_PUMP1_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_2, "==3"))
+    ledlist.append(Led(31, "FUEL_PUMP2_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_3, "==1"))
+    ledlist.append(Led(32, "FUEL_PUMP2_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_3, "==3"))
+    ledlist.append(Led(33, "FUEL_R_PUMP1_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_4, "==1"))
+    ledlist.append(Led(34, "FUEL_R_PUMP1_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_4, "==3"))
+    ledlist.append(Led(35, "FUEL_R_PUMP2_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_5, "==1"))
+    ledlist.append(Led(36, "FUEL_R_PUMP2_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_5, "==3"))
+    ledlist.append(Led(37, "FUEL_MODE_SEL_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_6, "==1"))
+    ledlist.append(Led(38, "FUEL_MODE_SEL_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_6, "==3"))
     ledlist.append(Led(39, "FIRE_ENG1_ON_LED", None, DREF_TYPE.ARRAY_6))
     ledlist.append(Led(40, "FIRE_ENG2_ON_LED", None, DREF_TYPE.ARRAY_6))
     ledlist.append(Led(41, "FIRE_APU_ON_LED", "AirbusFBW/APUOnFire"))
@@ -394,10 +395,17 @@ async def xplane_ws_listener():
                                 for v in value:
                                     for l2 in ledobj: # we received an array, send update to all objects
                                         if idx == l2.dreftype.value - DREF_TYPE.ARRAY_0.value:
-                                            print(f"[A107]                       array value[{idx}] of {l2.label} = {value[idx]}")
+                                            value_new = value[idx]
+                                            if l2.eval:
+                                                s = 'value_new' + l2.eval
+                                                value_new = eval(s)
+                                            print(f"[A107]                       array value[{idx}] of {l2.label} = {value_new}")
                                             #TODO: update LED on panel 1/2
                                     idx += 1
                             else:
+                                if ledobj.eval != None:
+                                    s = 'value' + ledobj.eval
+                                    value = eval(s)
                                 print(f" found: {ledobj.label} = {value}")
                                 #TODO: update LED on panel 2/2
                         else:
