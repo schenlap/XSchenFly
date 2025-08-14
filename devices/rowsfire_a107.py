@@ -54,7 +54,10 @@ class DREF_TYPE(Enum):
     ARRAY_0 = 10 # element [0]
     ARRAY_1 = 11 # element [1]
     ARRAY_2 = 12 # element [2]
-    ARRAY_3 = 13 # element [3]
+    ARRAY_3 = 13
+    ARRAY_4 = 14
+    ARRAY_5 = 15
+    ARRAY_6 = 16
 
 
 class Button:
@@ -152,17 +155,62 @@ xp_dataref_ids = {}
 
 
 def create_led_list_a107():
-    ledlist.append(Led(0, "APU_MASTER_LED", "AirbusFBW/APUMaster"))
-    ledlist.append(Led(1, "APU_STARTER_LED", "AirbusFBW/APUStarter"))
-    ledlist.append(Led(2, "ADIRS_ON_BAT_LED", "AirbusFBW/ADIRUOnBat"))
-    ledlist.append(Led(3, "GPWS_FLAP3_LED", "AirbusFBW/GPWSSwitchArray", DREF_TYPE.ARRAY_3))
-    ledlist.append(Led(4, "GPWS_FLAP_MODE_LED", "AirbusFBW/GPWSSwitchArray", DREF_TYPE.ARRAY_2))
+    ledlist.append(Led(0, "APU_MASTER_ON_LED", "AirbusFBW/APUMaster"))
+    ledlist.append(Led(1, "APU_MASTER_FAULT_LED", None))
+    ledlist.append(Led(2, "APU_STARTER_ON_LED", "AirbusFBW/APUStarter"))
+    ledlist.append(Led(3, "APU_STARTER_AVAIL_LED", "AirbusFBW/APUAvail"))
+    ledlist.append(Led(4, "APU_GEN_OFF_LED", "AirbusFBW/APUGenOHPArray", DREF_TYPE.ARRAY_0)) # TODO invers
+    ledlist.append(Led(5, "AIR_APU_BLEED_ON_LED", "AirbusFBW/APUBleedSwitch"))
+    ledlist.append(Led(6, "AIR_APU_BLEED_FAULT_LED", None))
+    ledlist.append(Led(7, "AIR_PACK1_BLEED_OFF_LED", "AirbusFBW/Pack1Switch")) # TODO invers
+    ledlist.append(Led(8, "AIR_PACK1_BLEED_FAULT_LED", None))
+    ledlist.append(Led(9, "AIR_PACK2_BLEED_OFF_LED", "AirbusFBW/Pack2Switch")) # TODO invers
+    ledlist.append(Led(10, "AIR_PACK2_BLEED_FAULT_LED", None))
+    ledlist.append(Led(11, "ADIRS_ON_BAT_LED", "AirbusFBW/ADIRUOnBat"))
+    ledlist.append(Led(12, "GPWS_FLAP3_ON_LED", "AirbusFBW/GPWSSwitchArray", DREF_TYPE.ARRAY_3))
+    ledlist.append(Led(13, "RCDR_GND_CTL_ON_LED", "AirbusFBW/CvrGndCtrl"))
+    ledlist.append(Led(14, "OXYGEN_CREW_SUPPLY_OFF_LED", "AirbusFBW/CrewOxySwitch")) # TODO invers
+    ledlist.append(Led(15, "ANTIICE_WING_ON_LED", None))
+    ledlist.append(Led(16, "ANTIICE_WING_FAULT_LED", None))
+    ledlist.append(Led(17, "ANTIICE_ENG1_ON_LED", None))
+    ledlist.append(Led(18, "ANTIICE_ENG1_FAULT_LED", None))
+    ledlist.append(Led(19, "ANTIICE_ENG2_ON_LED", None))
+    ledlist.append(Led(20, "ANTIICE_ENG2_FAULT_LED", None))
+    ledlist.append(Led(21, "ELEC_BAT1_OFF_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0)) # .. 1
+    ledlist.append(Led(22, "ELEC_BAT1_FAULT_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0)) # .. 3
+    ledlist.append(Led(23, "ELEC_BAT2_OFF_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_1)) # .. 1
+    ledlist.append(Led(24, "ELEC_BAT2_FAULT_LED", "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_1)) # .. 3
+    ledlist.append(Led(25, "ELEC_EXT_PWR_AVAIL_LED", "AirbusFBW/ExtPowOHPArray", DREF_TYPE.ARRAY_0)) # .. 2
+    ledlist.append(Led(26, "ELEC_EXT_PWR_ON_LED", "AirbusFBW/ExtPowOHPArray", DREF_TYPE.ARRAY_0)) # .. 1
+    ledlist.append(Led(27, "FUEL_L_PUMP1_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_0)) # .. 1
+    ledlist.append(Led(28, "FUEL_L_PUMP1_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_0)) # .. 3
+    ledlist.append(Led(29, "FUEL_L_PUMP2_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_1)) # .. 1
+    ledlist.append(Led(30, "FUEL_L_PUMP2_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_1)) # .. 3
+    ledlist.append(Led(31, "FUEL_PUMP1_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_2)) # .. 1
+    ledlist.append(Led(32, "FUEL_PUMP1_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_2)) # .. 3
+    ledlist.append(Led(31, "FUEL_PUMP2_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_3)) # .. 1
+    ledlist.append(Led(32, "FUEL_PUMP2_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_3)) # .. 3
+    ledlist.append(Led(33, "FUEL_R_PUMP1_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_4)) # .. 1
+    ledlist.append(Led(34, "FUEL_R_PUMP1_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_4)) # .. 3
+    ledlist.append(Led(35, "FUEL_R_PUMP2_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_5)) # .. 1
+    ledlist.append(Led(36, "FUEL_R_PUMP2_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_5)) # .. 3
+    ledlist.append(Led(37, "FUEL_MODE_SEL_OFF_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_6)) # .. 3
+    ledlist.append(Led(38, "FUEL_MODE_SEL_FAULT_LED", "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_6)) # .. 3
+    ledlist.append(Led(39, "FIRE_ENG1_ON_LED", None, DREF_TYPE.ARRAY_6))
+    ledlist.append(Led(40, "FIRE_ENG2_ON_LED", None, DREF_TYPE.ARRAY_6))
+    ledlist.append(Led(41, "FIRE_APU_ON_LED", "AirbusFBW/APUOnFire"))
+    ledlist.append(Led(42, "ADIRS_IR1_ALTN_LED", None))
+    ledlist.append(Led(43, "ADIRS_IR1_FAULT_LED", None))
+    ledlist.append(Led(44, "ADIRS_IR2_ALTN_LED", None))
+    ledlist.append(Led(45, "ADIRS_IR2_FAULT_LED", None))
+    ledlist.append(Led(46, "ADIRS_IR3_ALTN_LED", None))
+    ledlist.append(Led(47, "ADIRS_IR3_FAULT_LED", None))
 
 
 def create_button_list_a107():
     create_led_list_a107()
     buttonlist.append(Button(0, "APU_MASTER", "MF_Name_APU_Master", "AirbusFBW/APUMaster", DREF_TYPE.DATA, BUTTON.TOGGLE, ledlist[0]))
-    buttonlist.append(Button(1, "APU_START", "MF_Name_APU_Start", "AirbusFBW/APUStarter", DREF_TYPE.DATA, BUTTON.TOGGLE, ledlist[1]))
+    buttonlist.append(Button(1, "APU_START", "MF_Name_APU_Start", "AirbusFBW/APUStarter", DREF_TYPE.DATA, BUTTON.TOGGLE, ledlist[2]))
 
 
 def a107_button_event(xp):
@@ -270,10 +318,12 @@ def get_dataref_id():
     xp.headers["Content-Type"] = "application/json"
     print(f"[A107] reading led dataref ids ...")
     for l in ledlist:
+        if l.dataref == None:
+            continue
         xpdr_code_response = xp.get("http://localhost:8086/api/v2/datarefs", params={"filter[name]": l.dataref})
         if xpdr_code_response.status_code != 200:
-            print(xpdr_code_response)
-            return
+            print(f"[A107] ERROR: {xpdr_code_response} for {l.label}, {l.dataref}")
+            continue
         print(f'name: {l.label}, id: {xpdr_code_response.json()["data"][0]["id"]}')
         if xpdr_code_response.json()["data"][0]["id"] in xp_dataref_ids:
             print(f"[A107] INFO: Object dataref alread registered")
@@ -340,17 +390,11 @@ async def xplane_ws_listener():
                                     for l2 in ledobj: # we received an array, send update to all objects
                                         if idx == l2.dreftype.value - DREF_TYPE.ARRAY_0.value:
                                             print(f"[A107]                       array value[{idx}] of {l2.label} = {value[idx]}")
+                                            #TODO: update LED on panel 1/2
                                     idx += 1
-                            #    for s in switch:
-                            #        value2 = value[LICHTER[0][2][idx]]
-                            #        print(f"value: {value2}")
-                            #        s.value = bool(value2)
-                            #        s.update()
-                            #        idx =idx + 1
                             else:
                                 print(f" found: {ledobj.label} = {value}")
-                            #switch.value = bool(value)
-                            #switch.update()
+                                #TODO: update LED on panel 2/2
                         else:
                             print(f" not found")
                 else:
