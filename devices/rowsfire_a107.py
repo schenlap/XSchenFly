@@ -19,6 +19,7 @@ import websockets
 # commands see https://github.com/MobiFlight/MobiFlight-FirmwareSource/blob/main/src/CommandMessenger.cpp
 
 XPLANE_WS_URL = "ws://localhost:8086/api/v2"
+XPLANE_REST_URL = "http://localhost:8086/api/v2/datarefs"
 
 BUTTONS_CNT = 20
 
@@ -314,7 +315,7 @@ def startupscreen(device, device_config, version, new_version):
     #rawsfire_a107_set_lcd(device, version[1:], "   ", "Schen", " lap")
 
 
-def get_dataref_id():
+def xplane_get_dataref_id():
     global LICHTER
     global xp_dataref_ids
     global cmdrefs_ids
@@ -326,7 +327,7 @@ def get_dataref_id():
     for l in ledlist:
         if l.dataref == None:
             continue
-        xpdr_code_response = xp.get("http://localhost:8086/api/v2/datarefs", params={"filter[name]": l.dataref})
+        xpdr_code_response = xp.get(XPLANE_REST_URL, params={"filter[name]": l.dataref})
         if xpdr_code_response.status_code != 200:
             print(f"[A107] ERROR: {xpdr_code_response} for {l.label}, {l.dataref}")
             continue
@@ -469,7 +470,7 @@ class device:
     def connected(self):
         global xplane_connected
         print(f"[A107] X-Plane connected")
-        get_dataref_id()
+        xplane_get_dataref_id()
         #RequestDataRefs(self.xp)
         #loop = asyncio.new_event_loop()
         #asyncio.set_event_loop(loop)
