@@ -261,15 +261,13 @@ def get_dataref_id():
     xp.headers["Accept"] = "application/json"
     xp.headers["Content-Type"] = "application/json"
     print(f"[A107] reading led dataref ids ...")
-    for b in buttonlist:
-        if b.led == None:
-            continue
-        xpdr_code_response = xp.get("http://localhost:8086/api/v2/datarefs", params={"filter[name]": b.led.dataref})
+    for l in ledlist:
+        xpdr_code_response = xp.get("http://localhost:8086/api/v2/datarefs", params={"filter[name]": l.dataref})
         if xpdr_code_response.status_code != 200:
             print(xpdr_code_response)
             return
-        print(f'name: {b.led.label}, id: {xpdr_code_response.json()["data"][0]["id"]}')
-        xp_dataref_ids[xpdr_code_response.json()["data"][0]["id"]] = b.led
+        print(f'name: {l.label}, id: {xpdr_code_response.json()["data"][0]["id"]}')
+        xp_dataref_ids[xpdr_code_response.json()["data"][0]["id"]] = l
 
 
 async def xplane_ws_listener():
