@@ -58,6 +58,11 @@ class DREF_TYPE(Enum):
     ARRAY_4 = 14
     ARRAY_5 = 15
     ARRAY_6 = 16
+    ARRAY_7 = 17
+    ARRAY_8 = 18
+    ARRAY_9 = 19
+    ARRAY_10 = 20
+    ARRAY_11 = 21
 
 
 class Button:
@@ -199,12 +204,12 @@ def create_led_list_a107():
     ledlist.append(Led(39, "FIRE_ENG1_ON_LED", None, DREF_TYPE.ARRAY_6))
     ledlist.append(Led(40, "FIRE_ENG2_ON_LED", None, DREF_TYPE.ARRAY_6))
     ledlist.append(Led(41, "FIRE_APU_ON_LED", "AirbusFBW/APUOnFire"))
-    ledlist.append(Led(42, "ADIRS_IR1_ALTN_LED", None))
-    ledlist.append(Led(43, "ADIRS_IR1_FAULT_LED", None))
-    ledlist.append(Led(44, "ADIRS_IR2_ALTN_LED", None))
-    ledlist.append(Led(45, "ADIRS_IR2_FAULT_LED", None))
-    ledlist.append(Led(46, "ADIRS_IR3_ALTN_LED", None))
-    ledlist.append(Led(47, "ADIRS_IR3_FAULT_LED", None))
+    ledlist.append(Led(42, "ADIRS_IR1_ALTN_LED", "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_6))
+    ledlist.append(Led(43, "ADIRS_IR1_FAULT_LED", "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_7))
+    ledlist.append(Led(44, "ADIRS_IR2_ALTN_LED", "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_8))
+    ledlist.append(Led(45, "ADIRS_IR2_FAULT_LED", "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_9))
+    ledlist.append(Led(46, "ADIRS_IR3_ALTN_LED", "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_10))
+    ledlist.append(Led(47, "ADIRS_IR3_FAULT_LED", "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_11))
 
 
 def create_button_list_a107():
