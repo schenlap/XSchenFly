@@ -31,6 +31,8 @@ class XP_Websocket:
         self.xp.headers["Accept"] = "application/json"
         self.xp.headers["Content-Type"] = "application/json"
         self.iddict = {}
+        self.req_id = 0
+        self.ws = None
 
 
     def dataref_id_fetch(self, dataref):
@@ -81,6 +83,46 @@ class XP_Websocket:
             return None
 
 
+    def datarefs_subscribe(self,dataref_list, update_callback = None):
+        asyncio.run(self.async_dataref_subscribe(dataref_list, update_callback))
+
+
+    async def async_dataref_subscribe(self, dataref_list, update_callback):
+        await (self.async_dataref_subsrcibe2_listener(dataref_list, update_callback))
+
+
+    async def async_dataref_subsrcibe2_listener(self, dataref_list, update_callback):
+        async with websockets.connect(self.ws_url, open_timeout=100) as ws:
+            self.ws = ws
+            # Abonnement senden
+            subscribe_msg = {
+                "req_id": self.req_id,
+                "type": "dataref_subscribe_values",
+                "params": {
+                    "datarefs": [{"id": ref_id} for ref_id in dataref_list]
+                    #"commands": [{"id": ref_id_cmd} for ref_id_cmd in cmdref_ids]
+                }
+            }
+            await ws.send(json.dumps(subscribe_msg))
+            self.req_id += 1
+
+            # wait for ack
+            ack = await ws.recv()
+            ack_data = json.loads(ack)
+            if not ack_data.get("success", False):
+                print(f"Abonnement fehlgeschlagen: {ack_data}")
+                return
+
+            # main-rx-Loop: get updates
+            while True:
+                try:
+                    msg = await ws.recv()
+                    data = json.loads(msg)
+                    if update_callback:
+                        update_callback(data)
+                except Exception as e:
+                    print(f"[A107] Fehler im Listener: {e}")
+                    break
 
 
 BUTTONS_CNT = 20
@@ -383,7 +425,7 @@ def xplane_get_dataref_ids(xp):
     global xp_dataref_ids
     global cmdrefs_ids
 
-    print(f"[A107] getting led dataref ids ...")
+    print(f"[A107] getting led dataref ids ... ", end="")
     for l in ledlist:
         if l.dataref == None:
             continue
@@ -397,82 +439,49 @@ def xplane_get_dataref_ids(xp):
                 if l2.dataref == l.dataref:
                     larray.append(l2)
             xp_dataref_ids[id] = larray.copy()
-            #print(f"[A107] ARRAY in ids {larray}")
         else:
             xp_dataref_ids[id] = l
+    print("done")
 
 
-async def xplane_ws_listener():
-    print(f"[A107] register datarefs ...")
-    xpws_req_id = 0
-    async with websockets.connect(XPLANE_WS_URL) as ws:
-        # Abonnement senden
-        subscribe_msg = {
-            "req_id": xpws_req_id,
-            "type": "dataref_subscribe_values",
-            "params": {
-                "datarefs": [{"id": ref_id} for ref_id in xp_dataref_ids]
-                #"commands": [{"id": ref_id_cmd} for ref_id_cmd in cmdref_ids]
-            }
-        }
-        #print(subscribe_msg)
-        await ws.send(json.dumps(subscribe_msg))
-        xpws_req_id = xpws_req_id + 1
+def xplane_ws_listener(data):
+    #print(f"[A107] recevice: {data}")
+    if data.get("type") != "dataref_update_values":
+        print(f"[A107] not defined {data}")
+        return
 
-        # Warte auf Bestätigung
-        ack = await ws.recv()
-        ack_data = json.loads(ack)
-        if not ack_data.get("success", False):
-            print(f"Abonnement fehlgeschlagen: {ack_data}")
-            return
+    for ref_id_str, value in data["data"].items():
+        ref_id = int(ref_id_str)
+        print(f"[A107] searching for {ref_id}...", end='')
+        if ref_id in xp_dataref_ids:
+            ledobj = xp_dataref_ids[ref_id]
 
-        print("[A107] dataref subscription done")
+            if type(value) is list:
+                if type(ledobj) != list:
+                    #print("")
+                    print(f"[A107] ERROR: led array dataref not registered as list!")
+                    exit()
+                #print(f"") # end line
+                idx = 0
+                for v in value:
+                    for l2 in ledobj: # we received an array, send update to all objects
+                        if idx == l2.dreftype.value - DREF_TYPE.ARRAY_0.value:
+                            value_new = value[idx]
+                            if l2.eval:
+                                s = 'value_new' + l2.eval
+                                value_new = eval(s)
+                            print(f"[A107]                       array value[{idx}] of {l2.label} = {value_new}")
+                            #TODO: update LED on panel 1/2
+                    idx += 1
+            else:
+                if ledobj.eval != None:
+                    s = 'value' + ledobj.eval
+                    value = eval(s)
+                print(f" found: {ledobj.label} = {value}")
+                #TODO: update LED on panel 2/2
+        else:
+            print(f" not found")
 
-        # Haupt-Loop: Updates empfangen
-        while True:
-            try:
-                msg = await ws.recv()
-                data = json.loads(msg)
-
-                #print(f"[A107] recevice: {data}")
-                if data.get("type") == "dataref_update_values":
-                    for ref_id_str, value in data["data"].items():
-                        ref_id = int(ref_id_str)
-                        #print(f"[A107] searching for {ref_id}...", end='')
-                        if ref_id in xp_dataref_ids:
-                            ledobj = xp_dataref_ids[ref_id]
-
-                            if type(value) is list:
-                                if type(ledobj) != list:
-                                    #print("")
-                                    print(f"[A107] ERROR: led array dataref not registered as list!")
-                                    exit()
-                                #print(f"") # end line
-                                idx = 0
-                                for v in value:
-                                    for l2 in ledobj: # we received an array, send update to all objects
-                                        if idx == l2.dreftype.value - DREF_TYPE.ARRAY_0.value:
-                                            value_new = value[idx]
-                                            if l2.eval:
-                                                s = 'value_new' + l2.eval
-                                                value_new = eval(s)
-                                            #print(f"[A107]                       array value[{idx}] of {l2.label} = {value_new}")
-                                            #TODO: update LED on panel 1/2
-                                    idx += 1
-                            else:
-                                if ledobj.eval != None:
-                                    s = 'value' + ledobj.eval
-                                    value = eval(s)
-                                #print(f" found: {ledobj.label} = {value}")
-                                #TODO: update LED on panel 2/2
-                        else:
-                            print(f" not found")
-                else:
-                    print(f"[A107] not defined {data}")
-
-            except Exception as e:
-                print(f"[A107] Fehler im Listener: {e}")
-                break
 
 
 class UsbManager:
@@ -511,11 +520,6 @@ class UsbManager:
                     return d['vid'], d['pid'], self.device_config
             print("not found")
         return None, None, 0
-    
-
-async def start_xp_ws():
-    t = asyncio.create_task(xplane_ws_listener())
-    #await asyncio.wait({t})
 
 
 class device:
@@ -524,17 +528,16 @@ class device:
         self.cyclic = Event()
         self.xp = XP_Websocket(XPLANE_REST_URL, XPLANE_WS_URL)
 
+
     def connected(self):
         global xplane_connected
         print(f"[A107] X-Plane connected")
         xplane_get_dataref_ids(self.xp)
-        #RequestDataRefs(self.xp)
-        #loop = asyncio.new_event_loop()
-        #asyncio.set_event_loop(loop)
-        asyncio.run(start_xp_ws())
-        #asyncio.run(create_ws())
-        #xplane_connected = True
-
+        print(f"[A107] subsrcibe datarefs... ", end="")
+        t = Thread(target=self.xp.datarefs_subscribe, args=(xp_dataref_ids, xplane_ws_listener))
+        t.start()
+        print(f"done")
+        xplane_connected = True
 
 
     def disconnected(self):
@@ -554,21 +557,15 @@ class device:
         strobe = self.xp.dataref_id_fetch("AirbusFBW/OHPLightSwitches")
         antiice = self.xp.command_id_fetch("toliss_airbus/antiicecommands/WingToggle")
         while True:
-            print(f"[A107] sending APU-Master = 1")
+            #print(f"[A107] sending APU-Master = 1")
             self.xp.dataref_set_value(apu_master, 1)
             self.xp.dataref_set_value(strobe, 1, 7)
             self.xp.command_activate_duration(antiice, 1)
             time.sleep(2)
-            print(f"[A107] sending APU-Master = 0")
+            #print(f"[A107] sending APU-Master = 0")
             self.xp.dataref_set_value(apu_master, 0)
             self.xp.dataref_set_value(strobe, 0, 7)
             time.sleep(2)
-            #try:
-            #    values = self.xp.GetValues()
-            #    values_processed.wait()
-            #except XPlaneUdp.XPlaneTimeout:
-            #    sleep(1)
-            #    continue
 
 
     def init_device(self, version: str = None, new_version: str = None):
