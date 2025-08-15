@@ -158,18 +158,17 @@ class DREF_TYPE(Enum):
     ARRAY_9 = 19
     ARRAY_10 = 20
     ARRAY_11 = 21
+    ARRAY_12 = 22
 
 
 class Button:
-    def __init__(self, nr, label, mf_button, dataref = None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.NONE, led = None):
+    def __init__(self, nr, label, mf_button, dataref = None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.NONE):
         self.id = nr
         self.label = label
         self.mf_button = mf_button # Mobiflight
         self.dataref = dataref
         self.dreftype = dreftype
-        #self.data = None
         self.type = button_type
-        self.led = led
 
 class Led:
     def __init__(self, nr, label, dataref, dreftype = DREF_TYPE.NONE, eval = None):
@@ -187,27 +186,6 @@ ledlist = []
 device_config = DEVICEMASK.NONE
 
 
-# Konfiguration: Schaltername, DataRef-ID, Kommando
-LICHTER = [
-    (["Beacon Light", # 0
-      "Wing Light", # 1
-      "Nav Light", # 2
-      "Land Left", # 3
-      "Land Right", # 4
-      "Nose Light", # 5
-      "RWY Turn", # 6
-      "Strobe Light", # 7
-      "Seatbelts", # 11
-      "Smoke"], # 12
-      "AirbusFBW/OHPLightSwitches", [0, 1, 2, 3, 4, 5, 6, 7, 11, 12])
-    #("Beacon Light",  None, "AirbusFBW/OHPLightSwitches", 0), # 0,1
-    #("Taxi Light",    None, "sim/cockpit/electrical/taxi_light_on"),
-    #("Strobe Light2",  None, "sim/cockpit/electrical/strobe_lights_on"),
-    #("Nav Light",     None, "sim/cockpit/electrical/nav_lights_on"),
-    #("Panel Light",   "sim/lights/panel_lights_toggle", "sim/cockpit/electrical/panel_light_on"),
-] # dataref_id, switch_object gets added during runtime
-
-
 def rawsfire_a107_set_leds(device, leds, brightness):
     if isinstance(leds, list):
         for i in range(len(leds)):
@@ -215,7 +193,9 @@ def rawsfire_a107_set_leds(device, leds, brightness):
     else:
         rawsfire_a107_set_led(device, leds, brightness)
 
+
 def rawsfire_a107_set_led(device, led, brightness):
+    return # TODO
     if led.value < 100: # FCU
         data = [0x02, 0x10, 0xbb, 0, 0, 3, 0x49, led.value, brightness, 0,0,0,0,0]
     if 'data' in locals():
@@ -224,6 +204,7 @@ def rawsfire_a107_set_led(device, led, brightness):
 
 
 def lcd_init(ep):
+    return # TODO
     data = [0xf0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0] # init packet
     cmd = bytes(data)
     ep.write(cmd)
@@ -232,7 +213,6 @@ def lcd_init(ep):
 def rawsfire_107_set_lcd(device, speed, heading, alt, vs):
     global usb_retry
     return
-
 
 
 a107_device = None # usb /dev/inputx device
@@ -306,8 +286,19 @@ def create_led_list_a107():
 
 def create_button_list_a107():
     create_led_list_a107()
-    buttonlist.append(Button(0, "APU_MASTER", "MF_Name_APU_Master", "AirbusFBW/APUMaster", DREF_TYPE.DATA, BUTTON.TOGGLE, ledlist[0]))
-    buttonlist.append(Button(1, "APU_START", "MF_Name_APU_Start", "AirbusFBW/APUStarter", DREF_TYPE.DATA, BUTTON.TOGGLE, ledlist[2]))
+    buttonlist.append(Button(0, "APU_MASTER", "MF_Name_APU_Master", "AirbusFBW/APUMaster", DREF_TYPE.DATA, BUTTON.TOGGLE))
+    buttonlist.append(Button(1, "APU_START", "MF_Name_APU_Start", "AirbusFBW/APUStarter", DREF_TYPE.DATA, BUTTON.TOGGLE))
+    buttonlist.append(Button(2, "APU_BLEED", "MF_Name_APU_Bleed", "AirbusFBW/AirbusFBW/APUBleedSwitch", DREF_TYPE.DATA, BUTTON.TOGGLE))
+    buttonlist.append(Button(3, "Beacon Light", "MF_Name_Beacon_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE))
+    buttonlist.append(Button(4, "Wing Light", "MF_Name_Wing_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_1, BUTTON.TOGGLE))
+    buttonlist.append(Button(5, "Nav Light", "MF_Name_Nav_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
+    buttonlist.append(Button(6, "Land Left Light", "MF_Name_Land_Left_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.TOGGLE))
+    buttonlist.append(Button(7, "Land Tight Light", "MF_Name_Land_Right_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.TOGGLE))
+    buttonlist.append(Button(8, "Nose Light", "MF_Name_Nose_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.TOGGLE))
+    buttonlist.append(Button(9, "RWY Turn Light", "MF_Name_RWY_Turn_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_6, BUTTON.TOGGLE))
+    buttonlist.append(Button(10, "Strobe Light", "MF_Name_Strobe_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.TOGGLE))
+    buttonlist.append(Button(11, "Seatbelt", "MF_Name_Seatbelt", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_11, BUTTON.TOGGLE))
+    buttonlist.append(Button(12, "Smoke", "MF_Name_Smoke", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
 
 
 def set_button_led_lcd(device, dataref, v):
