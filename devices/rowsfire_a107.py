@@ -10,6 +10,7 @@ import hid
 
 import XPlaneUdp # should not be used here
 import json
+import time
 
 import PyCmdMessenger # https://github.com/harmsm/PyCmdMessenger
 from requests import Session
@@ -549,7 +550,19 @@ class device:
         global values
 
         self.cyclic.wait()
-        #while True:
+        apu_master = self.xp.dataref_id_fetch("AirbusFBW/APUMaster")
+        strobe = self.xp.dataref_id_fetch("AirbusFBW/OHPLightSwitches")
+        antiice = self.xp.command_id_fetch("toliss_airbus/antiicecommands/WingToggle")
+        while True:
+            print(f"[A107] sending APU-Master = 1")
+            self.xp.dataref_set_value(apu_master, 1)
+            self.xp.dataref_set_value(strobe, 1, 7)
+            self.xp.command_activate_duration(antiice, 1)
+            time.sleep(2)
+            print(f"[A107] sending APU-Master = 0")
+            self.xp.dataref_set_value(apu_master, 0)
+            self.xp.dataref_set_value(strobe, 0, 7)
+            time.sleep(2)
             #try:
             #    values = self.xp.GetValues()
             #    values_processed.wait()
