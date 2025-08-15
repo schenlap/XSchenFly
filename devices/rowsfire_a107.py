@@ -8,7 +8,6 @@ from time import sleep
 
 import hid
 
-import XPlaneUdp # should not be used here
 import json
 import time
 
@@ -125,8 +124,6 @@ class XP_Websocket:
                     break
 
 
-BUTTONS_CNT = 20
-
 #@unique
 class DEVICEMASK(IntEnum):
     NONE = 0
@@ -143,13 +140,6 @@ class BUTTON(Enum):
     SEND_4 = 6
     SEND_5 = 7
     NONE = 5 # for testing
-
-
-class Leds(Enum):
-    BACKLIGHT = 0 # 0 .. 255
-    SCREEN_BACKLIGHT = 1 # 0 .. 255
-    LOC_GREEN = 3 # all on/off
-
 
 
 class DREF_TYPE(Enum):
@@ -193,7 +183,6 @@ xplane_connected = False
 xp_dataref_ids = {}
 buttonlist = []
 ledlist = []
-values = []
 
 device_config = DEVICEMASK.NONE
 
@@ -254,10 +243,6 @@ datacache = {}
 datarefs = [
     ("AirbusFBW/HDGdashed", 2)
   ]
-
-
-buttons_press_event = [0] * BUTTONS_CNT
-buttons_release_event = [0] * BUTTONS_CNT
 
 usb_retry = False
 
@@ -325,69 +310,6 @@ def create_button_list_a107():
     buttonlist.append(Button(1, "APU_START", "MF_Name_APU_Start", "AirbusFBW/APUStarter", DREF_TYPE.DATA, BUTTON.TOGGLE, ledlist[2]))
 
 
-def a107_button_event(xp):
-    #print(f'events: press: {buttons_press_event}, release: {buttons_release_event}')
-    for b in buttonlist:
-        if not any(buttons_press_event) and not any(buttons_release_event):
-            break
-        if b.id == None:
-            continue
-        if buttons_press_event[b.id]:
-            buttons_press_event[b.id] = 0
-            #print(f'button {b.label} pressed')
-            if b.type == BUTTON.TOGGLE:
-                val = datacache[b.dataref]
-                if b.dreftype== DREF_TYPE.DATA:
-                    print(f'set dataref {b.dataref} from {bool(val)} to {not bool(val)}')
-                    xp.WriteDataRef(b.dataref, not bool(val))
-                elif b.dreftype== DREF_TYPE.CMD:
-                    print(f'send command {b.dataref}')
-                    xp.SendCommand(b.dataref)
-            elif b.type == BUTTON.SWITCH:
-                val = datacache[b.dataref]
-                if b.dreftype== DREF_TYPE.DATA:
-                    print(f'set dataref {b.dataref} to 1')
-                    xp.WriteDataRef(b.dataref, 1)
-                elif b.dreftype== DREF_TYPE.CMD:
-                    print(f'send command {b.dataref}')
-                    xp.SendCommand(b.dataref)
-            elif b.type == BUTTON.SEND_0:
-                if b.dreftype== DREF_TYPE.DATA:
-                    print(f'set dataref {b.dataref} to 0')
-                    xp.WriteDataRef(b.dataref, 0)
-            elif b.type == BUTTON.SEND_1:
-                if b.dreftype== DREF_TYPE.DATA:
-                    print(f'set dataref {b.dataref} to 1')
-                    xp.WriteDataRef(b.dataref, 1)
-            elif b.type == BUTTON.SEND_2:
-                if b.dreftype== DREF_TYPE.DATA:
-                    print(f'set dataref {b.dataref} to 2')
-                    xp.WriteDataRef(b.dataref, 2)
-            elif b.type == BUTTON.SEND_3:
-                if b.dreftype== DREF_TYPE.DATA:
-                    print(f'set dataref {b.dataref} to 3')
-                    xp.WriteDataRef(b.dataref, 3)
-            elif b.type == BUTTON.SEND_4:
-                if b.dreftype== DREF_TYPE.DATA:
-                    print(f'set dataref {b.dataref} to 4')
-                    xp.WriteDataRef(b.dataref, 4)
-            elif b.type == BUTTON.SEND_5:
-                if b.dreftype== DREF_TYPE.DATA:
-                    print(f'set dataref {b.dataref} to 5')
-                    xp.WriteDataRef(b.dataref, 5)
-            else:
-                print(f'no known button type for button {b.label}')
-        if buttons_release_event[b.id]:
-            buttons_release_event[b.id] = 0
-            print(f'button {b.label} released')
-            if b.type == BUTTON.SWITCH:
-                xp.WriteDataRef(b.dataref, 0)
-
-
-def fcu_create_events(usb_mgr):
-    return
-
-
 def set_button_led_lcd(device, dataref, v):
     global led_brightness
     for b in buttonlist:
@@ -404,20 +326,10 @@ def set_button_led_lcd(device, dataref, v):
                 print(f'set led brigthness: {b.led}, value: {v}')
                 led_brightness = v
             break
-
-
-def set_datacache(usb_mgr, values):
-    global datacache
-    global exped_led_state
-
-    new = False
  
 
 def startupscreen(device, device_config, version, new_version):
-    leds = [Leds.SCREEN_BACKLIGHT, Leds.BACKLIGHT]
-
-    rawsfire_a107_set_leds(device, leds, 80)
-    #rawsfire_a107_set_lcd(device, version[1:], "   ", "Schen", " lap")
+    print("TODO set startupscreen")
 
 
 def xplane_get_dataref_ids(xp):
@@ -481,7 +393,6 @@ def xplane_ws_listener(data):
                 #TODO: update LED on panel 2/2
         else:
             print(f" not found")
-
 
 
 class UsbManager:
@@ -548,28 +459,24 @@ class device:
 
 
     def cyclic_worker(self):
-        global value
         global device_config
-        global values
 
         self.cyclic.wait()
         apu_master = self.xp.dataref_id_fetch("AirbusFBW/APUMaster")
         strobe = self.xp.dataref_id_fetch("AirbusFBW/OHPLightSwitches")
         antiice = self.xp.command_id_fetch("toliss_airbus/antiicecommands/WingToggle")
         while True:
-            #print(f"[A107] sending APU-Master = 1")
             self.xp.dataref_set_value(apu_master, 1)
             self.xp.dataref_set_value(strobe, 1, 7)
             self.xp.command_activate_duration(antiice, 1)
             time.sleep(2)
-            #print(f"[A107] sending APU-Master = 0")
             self.xp.dataref_set_value(apu_master, 0)
             self.xp.dataref_set_value(strobe, 0, 7)
             time.sleep(2)
 
 
     def init_device(self, version: str = None, new_version: str = None):
-        global values, xplane_connected
+        global xplane_connected
         global device_config
         global datacache
 
@@ -580,7 +487,7 @@ class device:
         vid, pid, device_config = self.usb_mgr.find_device()
 
         if pid is None:
-            exit(f" [A107] No compatible rawsfire device found, quit")
+            return(f" [A107] No compatible rawsfire device found, quit")
         else:
             self.usb_mgr.connect_device(vid=vid, pid=pid)
 
