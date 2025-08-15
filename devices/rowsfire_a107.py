@@ -19,7 +19,68 @@ import websockets
 # commands see https://github.com/MobiFlight/MobiFlight-FirmwareSource/blob/main/src/CommandMessenger.cpp
 
 XPLANE_WS_URL = "ws://localhost:8086/api/v2"
-XPLANE_REST_URL = "http://localhost:8086/api/v2/datarefs"
+XPLANE_REST_URL = "http://localhost:8086/api/v2"
+
+class XP_Websocket:
+    def __init__(self, rest_url, ws_url):
+        self.xp_dataref_ids = {}
+        self.rest_url = rest_url
+        self.ws_url = ws_url
+        self.xp = Session()
+        self.xp.headers["Accept"] = "application/json"
+        self.xp.headers["Content-Type"] = "application/json"
+        self.iddict = {}
+
+
+    def dataref_id_fetch(self, dataref):
+        xpdr_code_response = self.xp.get(self.rest_url + "/datarefs", params={"filter[name]": dataref})
+        if xpdr_code_response.status_code != 200:
+            print(f"could not get id for {dataref}, Errorcode: {xpdr_code_response.status_code}:{xpdr_code_response.text}")
+            return None
+        return xpdr_code_response.json()["data"][0]["id"]
+    
+
+    def command_id_fetch(self, command):
+        xpdr_code_response = self.xp.get(self.rest_url + "/commands", params={"filter[name]": command})
+        if xpdr_code_response.status_code != 200:
+            print(f"could not get id for {command}, Errorcode: {xpdr_code_response.status_code}:{xpdr_code_response.text}")
+            return None
+        return xpdr_code_response.json()["data"][0]["id"]
+
+
+    def dataref_set_value(self, id, value, index = None):
+        if type(id) is not int:
+            id = self.dataref_id_fetch(id)
+
+        set_msg = {
+            "data": value
+        }
+        if index:
+            xpdr_code_response = self.xp.patch(self.rest_url + "/datarefs/" + str(id) + "/value", data=json.dumps(set_msg), params={"index":index})
+        else:
+            xpdr_code_response = self.xp.patch(self.rest_url + "/datarefs/" + str(id) + "/value", data=json.dumps(set_msg))   
+
+        if xpdr_code_response.status_code != 200:
+            print(f"could not set data for id {id}. Errorcode: {xpdr_code_response.status_code}:{xpdr_code_response.text}")
+            return None
+
+
+    def command_activate_duration(self, id, duration = 0.2):
+        if type(id) is not int:
+            id = self.command_id_fetch(id)
+
+        set_msg = {
+            "duration": duration
+        }
+
+        xpdr_code_response = self.xp.post(self.rest_url + "/command/" + str(id) + "/activate", data=json.dumps(set_msg))
+
+        if xpdr_code_response.status_code != 200:
+            print(f"could not send command for id {id}. Errorcode: {xpdr_code_response.status_code}:{xpdr_code_response.text}")
+            return None
+
+
+
 
 BUTTONS_CNT = 20
 
@@ -86,6 +147,7 @@ class Led:
         self.eval = eval
 
 xplane_connected = False
+xp_dataref_ids = {}
 buttonlist = []
 ledlist = []
 values = []
@@ -158,7 +220,7 @@ usb_retry = False
 
 xp = None
 
-xp_dataref_ids = {}
+
 
 
 def create_led_list_a107():
@@ -315,35 +377,28 @@ def startupscreen(device, device_config, version, new_version):
     #rawsfire_a107_set_lcd(device, version[1:], "   ", "Schen", " lap")
 
 
-def xplane_get_dataref_id():
+def xplane_get_dataref_ids(xp):
     global LICHTER
     global xp_dataref_ids
     global cmdrefs_ids
 
-    xp = Session()
-    xp.headers["Accept"] = "application/json"
-    xp.headers["Content-Type"] = "application/json"
-    print(f"[A107] reading led dataref ids ...")
+    print(f"[A107] getting led dataref ids ...")
     for l in ledlist:
         if l.dataref == None:
             continue
-        xpdr_code_response = xp.get(XPLANE_REST_URL, params={"filter[name]": l.dataref})
-        if xpdr_code_response.status_code != 200:
-            print(f"[A107] ERROR: {xpdr_code_response} for {l.label}, {l.dataref}")
-            continue
-        print(f'name: {l.label}, id: {xpdr_code_response.json()["data"][0]["id"]}')
-        if xpdr_code_response.json()["data"][0]["id"] in xp_dataref_ids:
-            print(f"[A107] INFO: Object dataref alread registered")
+        id = xp.dataref_id_fetch(l.dataref)
+        #print(f'name: {l.label}, id: {id}')
+        if id in xp_dataref_ids:
             continue
         if l.dreftype.value >= DREF_TYPE.ARRAY_0.value:
             larray = []
             for l2 in ledlist:
                 if l2.dataref == l.dataref:
                     larray.append(l2)
-            xp_dataref_ids[xpdr_code_response.json()["data"][0]["id"]] = larray.copy()
-            print(f"[A107] ARRAY in ids {larray}")
+            xp_dataref_ids[id] = larray.copy()
+            #print(f"[A107] ARRAY in ids {larray}")
         else:
-            xp_dataref_ids[xpdr_code_response.json()["data"][0]["id"]] = l
+            xp_dataref_ids[id] = l
 
 
 async def xplane_ws_listener():
@@ -378,20 +433,20 @@ async def xplane_ws_listener():
                 msg = await ws.recv()
                 data = json.loads(msg)
 
-                print(f"[A107] recevice: {data}")
+                #print(f"[A107] recevice: {data}")
                 if data.get("type") == "dataref_update_values":
                     for ref_id_str, value in data["data"].items():
                         ref_id = int(ref_id_str)
-                        print(f"[A107] searching for {ref_id}...", end='')
+                        #print(f"[A107] searching for {ref_id}...", end='')
                         if ref_id in xp_dataref_ids:
                             ledobj = xp_dataref_ids[ref_id]
 
                             if type(value) is list:
                                 if type(ledobj) != list:
-                                    print("")
+                                    #print("")
                                     print(f"[A107] ERROR: led array dataref not registered as list!")
                                     exit()
-                                print(f"") # end line
+                                #print(f"") # end line
                                 idx = 0
                                 for v in value:
                                     for l2 in ledobj: # we received an array, send update to all objects
@@ -400,14 +455,14 @@ async def xplane_ws_listener():
                                             if l2.eval:
                                                 s = 'value_new' + l2.eval
                                                 value_new = eval(s)
-                                            print(f"[A107]                       array value[{idx}] of {l2.label} = {value_new}")
+                                            #print(f"[A107]                       array value[{idx}] of {l2.label} = {value_new}")
                                             #TODO: update LED on panel 1/2
                                     idx += 1
                             else:
                                 if ledobj.eval != None:
                                     s = 'value' + ledobj.eval
                                     value = eval(s)
-                                print(f" found: {ledobj.label} = {value}")
+                                #print(f" found: {ledobj.label} = {value}")
                                 #TODO: update LED on panel 2/2
                         else:
                             print(f" not found")
@@ -459,24 +514,26 @@ class UsbManager:
 
 async def start_xp_ws():
     t = asyncio.create_task(xplane_ws_listener())
-    await asyncio.wait({t})
+    #await asyncio.wait({t})
 
 
 class device:
     def __init__(self, UDP_IP, UDP_PORT):
         self.usb_mgr = None
         self.cyclic = Event()
+        self.xp = XP_Websocket(XPLANE_REST_URL, XPLANE_WS_URL)
 
     def connected(self):
         global xplane_connected
         print(f"[A107] X-Plane connected")
-        xplane_get_dataref_id()
+        xplane_get_dataref_ids(self.xp)
         #RequestDataRefs(self.xp)
         #loop = asyncio.new_event_loop()
         #asyncio.set_event_loop(loop)
         asyncio.run(start_xp_ws())
         #asyncio.run(create_ws())
         #xplane_connected = True
+
 
 
     def disconnected(self):
@@ -524,5 +581,5 @@ class device:
         #usb_event_thread = Thread(target=fcu_create_events, args=[self.usb_mgr])
         #usb_event_thread.start()
 
-        #cyclic_thread = Thread(target=self.cyclic_worker)
-        #cyclic_thread.start()
+        cyclic_thread = Thread(target=self.cyclic_worker)
+        cyclic_thread.start()
