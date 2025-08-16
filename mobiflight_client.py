@@ -14,7 +14,6 @@ class MF:
     # mobiflight returns inputs on every change, e.g: b'28,Analog InputA0,1001;\r\n'
     def __init__(self, port, value_changed_cb):
         self.ser = ser = serial.Serial(port, 115200)
-        self.started = False
         self.init = True
 
         self.activated = False
@@ -27,8 +26,9 @@ class MF:
         self.rx_thread = Thread(target=self.__receive)
         self.rx_thread.start()
 
-        self.tx_thread = Thread(target=self.__startup_device)
-        self.tx_thread.start()
+        tx_thread = Thread(target=self.__startup_device)
+        tx_thread.start()
+        tx_thread.join()
 
 
     #@unique
@@ -119,11 +119,6 @@ class MF:
         self.__send_command(self.CMD.GET_CONFIG) # this returns CMD.INFO ['3.2.Output_Led2:1.3.Button_In3:11.14.5.Analog InputA0:3.13.Led:']
         while not self.pinlist:
             sleep(0.2)
-        self.started = True
-
-
-    def ready(self):
-        return self.started
 
 
     def __send_command(self, cmd, arg = None):
@@ -145,7 +140,6 @@ class MF:
     
 
     def close(self):
-        self.started = False
         self.init = False
         self.activated = False
         self.__send_command(self.CMD.GET_INFO)
@@ -163,8 +157,6 @@ ports = MF.serial_ports()
 port_mf = MF.serial_ports(USB_SERIAL_DEVICE)
 
 mf = MF(port_mf.device, mf_value_changed)
-while not mf.started:
-    sleep(0.2)
 
 mf.set_pin("Led", 255)
 sleep(2)
