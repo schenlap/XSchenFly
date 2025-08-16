@@ -7,28 +7,20 @@ from time import sleep
 import serial
 import serial.tools.list_ports as list_ports
 
-USB_SERIAL_DEVICE = "75830333438351508042"
 MOBIFLIGHT_SERIAL = "SN-301-533"  # currently not used
 
 class MF:
     # mobiflight returns inputs on every change, e.g: b'28,Analog InputA0,1001;\r\n'
-    def __init__(self, port, value_changed_cb):
-        self.ser = ser = serial.Serial(port, 115200)
+    def __init__(self, port):
+        self.ser = serial.Serial(port, 115200, timeout=1)
         self.init = True
 
         self.activated = False
         self.serialnumber = None
 
-        self.value_changed_cb = value_changed_cb
+        self.value_changed_cb = None
 
         self.pinlist = []
-
-        self.rx_thread = Thread(target=self.__receive)
-        self.rx_thread.start()
-
-        tx_thread = Thread(target=self.__startup_device)
-        tx_thread.start()
-        tx_thread.join()
 
 
     #@unique
@@ -51,34 +43,43 @@ class MF:
             self.pin = pin
         def __str__(self):
             return(f"{self.name}: {self.port}.{self.pin}")
-        
+    
 
-    def serial_ports(serialnumber = None):
+    def start(self, serialnumber, value_changed_cb):
+        self.value_changed_cb = value_changed_cb
+
+        self.rx_thread = Thread(target=self.__receive)
+        self.rx_thread.start()
+
+        tx_thread = Thread(target=self.__startup_device)
+        tx_thread.start()
+        tx_thread.join(timeout=4)
+
+        if self.serialnumber == serialnumber:
+            print("correct mobiflight serial:{serialnumber}")
+            return True
+
+        return False
+
+
+    def serial_ports():
         ports = list_ports.comports()
         result = []
         for p in ports:
             if p.pid != None:
-                if serialnumber:
-                    if serialnumber == p.serial_number:
-                        print(f"found mobiflight device serial {p.serial_number}")
-                        return p
-                else:
-                    print(f"   {p.device}: {p.manufacturer} serial {p.serial_number} {p.vid}:{p.pid}")
-                    result.append(p)
-        if serialnumber:
-            print(f"ERROR: did not find mobiflight device serial {serialnumber}")
-            return None
+                print(f"   {p.device}: {p.manufacturer} {p.vid}:{p.pid}")
+                result.append(p)
         return result
 
 
     def __receive(self):
          while self.init:
-            msg = self.ser.readline()
-            msg_decoded = msg.decode('ascii').removesuffix(';\r\n')
+            msg = self.ser.readline().decode('ascii')
+            if not msg.endswith(';\r\n'):
+                continue
+            msg_decoded = msg.removesuffix(';\r\n')
             msg_split = msg_decoded.split(',')
             cmd = self.CMD(int(msg_split[0]))
-            #if cmd not in reversed(self.CMD):
-            #    print(f"command {cmd} unknown")
 
             if cmd == self.CMD.CONFIG_ACTIVATED and msg_split[1] == 'OK':
                 self.activated = True
@@ -142,7 +143,6 @@ class MF:
     def close(self):
         self.init = False
         self.activated = False
-        self.__send_command(self.CMD.GET_INFO)
         self.rx_thread.join() # whait for rx thread ended
         self.serialnumber = None
         self.ser.close()
@@ -154,9 +154,18 @@ def mf_value_changed(pin, value):
 
 print("find mobiflight devices:")
 ports = MF.serial_ports()
-port_mf = MF.serial_ports(USB_SERIAL_DEVICE)
+for port_mf in ports:
+    print(f"testing {port_mf}")
+    mf = MF(port_mf.device)
+    if mf.start( MOBIFLIGHT_SERIAL, mf_value_changed):
+        break
+    else:
+        mf.close()
+        mf = None
 
-mf = MF(port_mf.device, mf_value_changed)
+if not mf:
+    print("No mobiflight device found")
+    exit()
 
 mf.set_pin("Led", 255)
 sleep(2)
@@ -164,3 +173,4 @@ mf.set_pin("Led", 0)
 
 sleep(10)
 mf.close()
+print("-- END --")
