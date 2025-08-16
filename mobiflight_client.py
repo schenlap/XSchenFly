@@ -51,12 +51,12 @@ class MF:
         self.rx_thread = Thread(target=self.__receive)
         self.rx_thread.start()
 
-        tx_thread = Thread(target=self.__startup_device)
-        tx_thread.start()
-        tx_thread.join(timeout=4)
+        startup_thread = Thread(target=self.__startup_device)
+        startup_thread.start()
+        startup_thread.join(timeout=4)
 
         if self.serialnumber == serialnumber:
-            print("correct mobiflight serial:{serialnumber}")
+            print(f"   found mobiflight device {serialnumber}")
             return True
 
         return False
@@ -89,7 +89,7 @@ class MF:
 
             if cmd == self.CMD.INFO and len(msg_split) == 6:
                 self.serialnumber = msg_split[3]
-                print(f"found serial number: {self.serialnumber}")
+                print(f"   received serial number: {self.serialnumber}")
             
             if cmd == self.CMD.INFO and len(msg_split) == 2: # return from GET_CONFIG
                 print(f"{cmd} {msg_split[1:]}")
@@ -107,7 +107,7 @@ class MF:
                        self.CMD.DIGINMUX_CHANGE,
                        self.CMD.BUTTON_CHANGE]:
                 #print(f"CHANGE:{cmd} {msg_split[1:]}")
-                if self.value_changed_cb:
+                if self.value_changed_cb and self.serialnumber:
                     self.value_changed_cb(msg_split[1],msg_split[2])
     
 
@@ -157,7 +157,7 @@ ports = MF.serial_ports()
 for port_mf in ports:
     print(f"testing {port_mf}")
     mf = MF(port_mf.device)
-    if mf.start( MOBIFLIGHT_SERIAL, mf_value_changed):
+    if mf.start(MOBIFLIGHT_SERIAL, mf_value_changed):
         break
     else:
         mf.close()
@@ -166,6 +166,8 @@ for port_mf in ports:
 if not mf:
     print("No mobiflight device found")
     exit()
+
+print("Mobiflight device startet successful")
 
 mf.set_pin("Led", 255)
 sleep(2)
