@@ -7,12 +7,11 @@ from time import sleep
 import serial
 import serial.tools.list_ports as list_ports
 
-MOBIFLIGHT_SERIAL = "SN-301-533"  # currently not used
-
 class MF:
     # mobiflight returns inputs on every change, e.g: b'28,Analog InputA0,1001;\r\n'
-    def __init__(self, port):
-        self.ser = serial.Serial(port, 115200, timeout=1)
+    def __init__(self, port = None):
+        if port:
+            self.ser = serial.Serial(port, 115200, timeout=1)
         self.init = True
 
         self.activated = False
@@ -55,14 +54,17 @@ class MF:
         startup_thread.start()
         startup_thread.join(timeout=4)
 
-        if self.serialnumber == serialnumber:
+        if self.serialnumber != None and serialnumber == None:
+            print(f"   found mobiflight device {self.serialnumber} without checking it")
+            return True
+        if self.serialnumber == serialnumber or ():
             print(f"   found mobiflight device {serialnumber}")
             return True
 
         return False
 
 
-    def serial_ports():
+    def serial_ports(self):
         ports = list_ports.comports()
         result = []
         for p in ports:
@@ -152,27 +154,32 @@ def mf_value_changed(pin, value):
     print(f"Value changed: {pin}, {value}")
 
 
-print("find mobiflight devices:")
-ports = MF.serial_ports()
-for port_mf in ports:
-    print(f"testing {port_mf}")
-    mf = MF(port_mf.device)
-    if mf.start(MOBIFLIGHT_SERIAL, mf_value_changed):
-        break
-    else:
-        mf.close()
-        mf = None
+def main():
+    print("find mobiflight devices:")
+    ports = MF.serial_ports(None)
+    for port_mf in ports:
+        print(f"testing {port_mf}")
+        mf = MF(port_mf.device)
+        if mf.start(None, mf_value_changed):
+            break
+        else:
+            mf.close()
+            mf = None
 
-if not mf:
-    print("No mobiflight device found")
-    exit()
+    if not mf:
+        print("No mobiflight device found")
+        exit()
 
-print("Mobiflight device startet successful")
+    print("Mobiflight device startet successful")
 
-mf.set_pin("Led", 255)
-sleep(2)
-mf.set_pin("Led", 0)
+    sleep(1)
+    mf.set_pin("Led", 255)
+    sleep(2)
+    mf.set_pin("Led", 0)
+    sleep(5)
 
-sleep(10)
-mf.close()
-print("-- END --")
+    mf.close()
+    print("-- END --")
+
+if __name__ == "__main__":
+    main()

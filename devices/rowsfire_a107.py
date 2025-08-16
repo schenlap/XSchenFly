@@ -11,15 +11,18 @@ import hid
 import json
 import time
 
-import PyCmdMessenger # https://github.com/harmsm/PyCmdMessenger
 from requests import Session
 import websockets
+
+import mobiflight_client as mf
 
 # it is compatible to mobiflight
 # commands see https://github.com/MobiFlight/MobiFlight-FirmwareSource/blob/main/src/CommandMessenger.cpp
 
 XPLANE_WS_URL = "ws://localhost:8086/api/v2"
 XPLANE_REST_URL = "http://localhost:8086/api/v2"
+
+MOBIFLIGHT_SERIAL = "SN-301-533"
 
 class XP_Websocket:
     def __init__(self, rest_url, ws_url):
@@ -386,42 +389,8 @@ def xplane_ws_listener(data):
             print(f" not found")
 
 
-class UsbManager:
-    def __init__(self):
-        self.device = None
-        self.device_config = 0
-
-    def connect_device(self, vid: int, pid: int):
-
-        # Connect to device. Linux uses device whreas mac uses Device
-        try:
-            self.device = hid.device()
-            self.device.open(vid, pid)
-        except AttributeError as e:
-            print("[A107] using hidapi mac version")
-            self.device = hid.Device(vid=vid, pid=pid)
-
-        if self.device is None:
-            raise RuntimeError("Device not found")
-
-        print("[A107] Device connected.")
-
-    def find_device(self):
-        device_config = 0
-
-        devlist = [{'vid':0x4098, 'pid':0xba01, 'name':'A107', 'mask':DEVICEMASK.A107},
-        ]
-
-        for d in devlist:
-            print(f"[A107] now searching for rawsfire {d['name']} ... ", end='')
-            found = False
-            for dev in hid.enumerate():
-                if dev['vendor_id'] == d['vid'] and dev['product_id'] == d['pid']:
-                    print("found")
-                    self.device_config |= d['mask']
-                    return d['vid'], d['pid'], self.device_config
-            print("not found")
-        return None, None, 0
+def mf_value_changed(pin, value):
+    print(f"Value changed: {pin}, {value}")
 
 
 class device:
@@ -474,20 +443,27 @@ class device:
         self.version = version
         self.new_version = new_version
 
-        self.usb_mgr = UsbManager()
-        vid, pid, device_config = self.usb_mgr.find_device()
+        print("find mobiflight devices:")
+        mf_dev = mf.MF()
+        ports = mf_dev.serial_ports()
+        mf_dev = None
+        for port_mf in ports:
+            print(f"testing {port_mf}")
+            mf_dev = mf.MF(port_mf.device)
+            if mf_dev.start(MOBIFLIGHT_SERIAL, mf_value_changed):
+                break
+            else:
+                mf_dev.close()
+                mf_dev = None
 
-        if pid is None:
+        if not mf_dev:
             return(f" [A107] No compatible rawsfire device found, quit")
-        else:
-            self.usb_mgr.connect_device(vid=vid, pid=pid)
+
+        print("Mobiflight device startet successful")
 
         create_button_list_a107()
     
-        startupscreen(self.usb_mgr.device, device_config, version, new_version)
-
-        #usb_event_thread = Thread(target=fcu_create_events, args=[self.usb_mgr])
-        #usb_event_thread.start()
+        #startupscreen(self.usb_mgr.device, device_config, version, new_version)
 
         cyclic_thread = Thread(target=self.cyclic_worker)
         cyclic_thread.start()
