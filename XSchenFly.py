@@ -142,8 +142,8 @@ def main():
     dev_winwing_fcu = devices.winwing_fcu.device(UDP_IP, UDP_PORT)
     dev_winwing_fcu.init_device(VERSION, new_version)
 
-    #dev_rowsfire_a107 = devices.rowsfire_a107.device(UDP_IP, UDP_PORT)
-    #dev_rowsfire_a107.init_device(VERSION, new_version)
+    dev_rowsfire_a107 = devices.rowsfire_a107.device(UDP_IP, UDP_PORT)
+    dev_rowsfire_a107.init_device(VERSION, new_version)
 
     while True:
         if not xplane_connected:
@@ -155,6 +155,7 @@ def main():
                 xplane_connected = True
                 dev_winwing_mcdu.connected()
                 dev_winwing_fcu.connected()
+                dev_rowsfire_a107.connected()
             except XPlaneUdp.XPlaneTimeout:
                 xplane_connected = False
                 sleep(1)
@@ -163,12 +164,14 @@ def main():
         try:
             dev_winwing_mcdu.cyclic.set()
             dev_winwing_fcu.cyclic.set()
+            dev_rowsfire_a107.cyclic.set()
             values = xp.GetValues()
         except XPlaneUdp.XPlaneTimeout:
             print(f'X-Plane timeout, could not connect on port {xp.BeaconData["Port"]}, waiting for X-Plane')
             xplane_connected = False
             dev_winwing_mcdu.disconnected()
             dev_winwing_fcu.disconnected()
+            dev_rowsfire_a107.disconnected()
             sleep(2)
 
 if __name__ == '__main__':

@@ -900,6 +900,8 @@ class device:
 
 
     def connected(self):
+        if not device_config:
+            return
         global xplane_connected
         print(f"[MCDU] X-Plane connected")
         self.display_mgr.write_line_to_page(8, 1, 'registering datarefs', 'G')
@@ -912,6 +914,9 @@ class device:
 
     def disconnected(self):
         global xplane_connected
+
+        if not device_config:
+            return
         xplane_connected = False
         print(f"[MCDU] X-Plane disconnected")
         winwing_mcdu_set_leds(self.usb_mgr.device, Leds.FAIL, 1)

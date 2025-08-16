@@ -18,7 +18,7 @@ For Discussions use https://forums.x-plane.org/forums/topic/324814-winwing-mcdu-
 2. copy `udev/71-winwing.rules` to `/etc/udev/rules.d`  
 `sudo cp udev/71-winwing.rules /etc/udev/rules.d/`
 3. install dependencies (on debian based systems)  
-`sudo aptitide install python3-hid libhidapi-hidraw0`
+`sudo aptitide install python3-hid python3-serial libhidapi-hidraw0`
 5. start script (with udev rule no sudo needed): `python3 ./XSchenFly.py` when X-Plane with Toliss aircraft is loaded.
 
 

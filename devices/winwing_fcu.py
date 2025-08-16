@@ -847,6 +847,9 @@ class device:
 
     def connected(self):
         global xplane_connected
+
+        if not device_config:
+            return
         print(f"[FCU] X-Plane connected")
         RequestDataRefs(self.xp)
         xplane_connected = True
@@ -854,6 +857,9 @@ class device:
 
     def disconnected(self):
         global xplane_connected
+
+        if not device_config:
+            return
         xplane_connected = False
         print(f"[FCU] X-Plane disconnected")
         startupscreen(self.usb_mgr.device, device_config, self.version, self.new_version)
