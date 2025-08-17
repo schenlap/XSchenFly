@@ -394,8 +394,13 @@ def xplane_ws_listener(data):
             print(f" not found")
 
 
-def mf_value_changed(pin, value):
-    print(f"Value changed: {pin}, {value}")
+def mf_value_changed(cmd, name, arg):
+    if cmd == mf.MF.CMD.BUTTON_CHANGE:
+        print(f"Value changed (Button): {name}, {arg[0]}") # value
+    elif cmd == mf.MF.CMD.DIGINMUX_CHANGE:
+        print(f"Value changed (DigInMux): {name}, {arg[0]}, {arg[1]}") # channel, value
+    elif cmd == mf.MF.CMD.ANALOG_CHANGE:
+        print(f"Value changed (Analog): {name}, {arg[0]}") # value
 
 
 class device:
