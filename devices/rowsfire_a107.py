@@ -26,7 +26,8 @@ MOBIFLIGHT_SERIAL = "SN-301-533"
 
 class XP_Websocket:
     def __init__(self, rest_url, ws_url):
-        self.xp_dataref_ids = {}
+        self.dataref_ids = {}
+        self.cmdref_ids = {}
         self.rest_url = rest_url
         self.ws_url = ws_url
         self.xp = Session()
@@ -121,7 +122,7 @@ class XP_Websocket:
                     msg = await ws.recv()
                     data = json.loads(msg)
                     if update_callback:
-                        update_callback(data)
+                        update_callback(data, dataref_list)
                 except Exception as e:
                     print(f"[A107] Fehler im Listener: {e}")
                     break
@@ -185,7 +186,6 @@ class Led:
         self.eval = eval
 
 xplane_connected = False
-xp_dataref_ids = {}
 buttonlist = []
 ledlist = []
 
@@ -390,30 +390,41 @@ def startupscreen(device, device_config, version, new_version):
 
 
 def xplane_get_dataref_ids(xp):
-    global LICHTER
-    global xp_dataref_ids
-    global cmdrefs_ids
-
     print(f"[A107] getting led dataref ids ... ", end="")
+    for data in [ledlist]:
+        for l in data:
+            if l.dataref == None:
+                continue
+            if l.dreftype == DREF_TYPE.CMD:
+                continue
+            id = xp.dataref_id_fetch(l.dataref)
+            #print(f'name: {l.label}, id: {id}')
+            if id in xp.dataref_ids:
+                continue
+            if l.dreftype.value >= DREF_TYPE.ARRAY_0.value:
+                larray = []
+                for l2 in ledlist:
+                    if l2.dataref == l.dataref:
+                        larray.append(l2)
+                xp.dataref_ids[id] = larray.copy()
+            else:
+                xp.dataref_ids[id] = l
+    print("done")
+    print(f"[A107] getting cmd dataref ids ... ", end="")
     for l in ledlist:
         if l.dataref == None:
             continue
-        id = xp.dataref_id_fetch(l.dataref)
-        #print(f'name: {l.label}, id: {id}')
-        if id in xp_dataref_ids:
+        if l.dreftype != DREF_TYPE.CMD:
             continue
-        if l.dreftype.value >= DREF_TYPE.ARRAY_0.value:
-            larray = []
-            for l2 in ledlist:
-                if l2.dataref == l.dataref:
-                    larray.append(l2)
-            xp_dataref_ids[id] = larray.copy()
-        else:
-            xp_dataref_ids[id] = l
+        id = xp.xp_cmdref_ids(l.dataref)
+        #print(f'name: {l.label}, id: {id}')
+        if id in xp.cmdref_ids:
+            continue
+        xp.cmdref_ids[id] = l
     print("done")
 
 
-def xplane_ws_listener(data):
+def xplane_ws_listener(data, dataref_ids):
     #print(f"[A107] recevice: {data}")
     if data.get("type") != "dataref_update_values":
         print(f"[A107] not defined {data}")
@@ -422,8 +433,8 @@ def xplane_ws_listener(data):
     for ref_id_str, value in data["data"].items():
         ref_id = int(ref_id_str)
         print(f"[A107] searching for {ref_id}...", end='')
-        if ref_id in xp_dataref_ids:
-            ledobj = xp_dataref_ids[ref_id]
+        if ref_id in dataref_ids:
+            ledobj = dataref_ids[ref_id]
 
             if type(value) is list:
                 if type(ledobj) != list:
@@ -473,7 +484,7 @@ class device:
         print(f"[A107] X-Plane connected")
         xplane_get_dataref_ids(self.xp)
         print(f"[A107] subsrcibe datarefs... ", end="")
-        t = Thread(target=self.xp.datarefs_subscribe, args=(xp_dataref_ids, xplane_ws_listener))
+        t = Thread(target=self.xp.datarefs_subscribe, args=(self.xp.dataref_ids, xplane_ws_listener))
         t.start()
         print(f"done")
         xplane_connected = True
@@ -525,7 +536,8 @@ class device:
                 mf_dev = None
 
         if not mf_dev:
-            return(f" [A107] No compatible rawsfire device found, quit")
+            print(f" [A107] No compatible rawsfire device found, quit")
+            return
 
         print("Mobiflight device startet successful")
 
