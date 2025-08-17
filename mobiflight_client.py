@@ -175,7 +175,6 @@ class MF:
                         idx_pcnt +=1
                     p.set_output_message_prefix(cnt_type)
                     idx_cur += 1
-                print("+++")
                 for p in self.pinlist:
                     print(p)
 
