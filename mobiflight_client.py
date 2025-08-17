@@ -115,7 +115,12 @@ class MF:
         if self.serialnumber == serialnumber or ():
             print(f"   found mobiflight device {serialnumber}")
             return True
+        
+        if not self.activated:
+            print("   no mobiflight device found")
+            return False
 
+        print(f"   Not using mobiflight device {self.serialnumber}, expected {serialnumber}")
         return False
 
 
