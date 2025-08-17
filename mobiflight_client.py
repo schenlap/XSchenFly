@@ -31,17 +31,72 @@ class MF:
         INFO = 10
         GET_CONFIG = 12
         CONFIG_ACTIVATED = 17
+        SET_SHIFT_REGISTER_PINS = 27
         ANALOG_CHANGE = 28
         INPUT_SHIFTER_CHANGE = 29
         DIGINMUX_CHANGE = 30
     
+    class TYPE(Enum):
+        BUTTON = 1
+        OUTPUT = 3
+        SERVO = 6
+        LCDDISPLAY_I2C = 7
+        ENCODER = 8
+        OUTPUT_SHIFTER = 10
+        ANALOG_INPUT_DEPRECATED = 11
+        INPUT_SHIFTER = 12
+        MUX_DRIVER = 13
+        DIG_IN_MUX = 14
+        STEPPER = 15
+        LED_SEGEMENT_MULTI = 16
+        CUSTOM_DEVICE = 17
+        ANALOG_INPUT = 18
+
+    class DIRECTION(Enum):
+        UNKNOWN = 0
+        IN = 1
+        OUT = 2
+        BI = 3
+
     class PINS:
-        def __init__(self, name, port, pin):
+        def __init__(self, name, config):
             self.name = name
-            self.port = port
-            self.pin = pin
+            self.config = config
+            self.type = MF.TYPE(int(config[0]))
+            if self.type in [MF.TYPE.BUTTON,MF.TYPE.ENCODER,
+                             MF.TYPE.ANALOG_INPUT_DEPRECATED,
+                             MF.TYPE.INPUT_SHIFTER,
+                             MF.TYPE.DIG_IN_MUX,
+                             MF.TYPE.ANALOG_INPUT]:
+
+                self.dir = MF.DIRECTION.IN
+            elif self.type == MF.TYPE.CUSTOM_DEVICE:
+                self.dir = MF.DIRECTION.UNKNOWN
+            else:
+                self.dir = MF.DIRECTION.OUT
+
+            self.msg_prefix = "" # must be set later when all devices are known
+
+
         def __str__(self):
-            return(f"{self.name}: {self.port}.{self.pin}")
+            return(f"{self.name} -> {self.config} {self.type} {self.dir} set:{self.msg_prefix}")
+
+
+        def is_output(self):
+            return self.dir == MF.DIRECTION.OUT
+
+
+        def set_output_message_prefix(self, cnt_of_type):
+            if not self.is_output():
+                return
+            cmd = 0
+            if self.type == MF.TYPE.OUTPUT_SHIFTER:
+                cmd = MF.CMD.SET_SHIFT_REGISTER_PINS
+                self.msg_prefix = str(cmd.value) + "," + str(cnt_of_type) + "," # pin and value follow
+                return
+            if self.type == MF.TYPE.OUTPUT:
+                cmd = MF.CMD.SET_PIN
+                self.msg_prefix = str(cmd.value) + "," # pin and value follow
     
 
     def start(self, serialnumber, value_changed_cb):
@@ -81,7 +136,7 @@ class MF:
                 continue
             msg_decoded = msg.removesuffix(';\r\n')
             msg_split = msg_decoded.split(',')
-            cmd = self.CMD(int(msg_split[0]))
+            cmd = MF.CMD(int(msg_split[0]))
 
             if cmd == self.CMD.CONFIG_ACTIVATED and msg_split[1] == 'OK':
                 self.activated = True
@@ -100,9 +155,30 @@ class MF:
                     pd = p.split('.')
                     if len(pd) <= 1:
                         continue
-                    newpin = self.PINS(pd[-1],pd[0],pd[1]) # check with mux devices, same parts are missing
+                    newpin = self.PINS(pd[-1],pd[:-1]) # check with mux devices, same parts are missing
                     self.pinlist.append(newpin)
-                    print(newpin)
+
+                # search which multipelxer number pin is
+                idx_cur = 0
+                for p in self.pinlist:
+                    if not p.is_output():
+                        idx_cur += 1
+                        continue
+                    #search for cont of multiplexers before
+                    idx_pcnt = 0
+                    cnt_type = 0
+                    for pcnt in self.pinlist:
+                        if idx_cur == idx_pcnt:
+                            break
+                        if p.type == pcnt.type:
+                            cnt_type += 1
+                        idx_pcnt +=1
+                    p.set_output_message_prefix(cnt_type)
+                    idx_cur += 1
+                print("+++")
+                for p in self.pinlist:
+                    print(p)
+
 
             if cmd in [self.CMD.ANALOG_CHANGE, 
                        self.CMD.INPUT_SHIFTER_CHANGE, 
@@ -129,15 +205,17 @@ class MF:
             msg = str(cmd.value) + ";"
         else:
             msg = str(cmd.value) + "," + str(arg[0]) + "," + str(arg[1]) + ";"
-        #if self.activated:
-        #    print(f"send {msg}")
+        if self.activated:
+            print(f"send {msg}")
         self.ser.write(bytearray(msg, 'ascii'))
     
 
-    def set_pin(self, name, value):
+    def set_pin(self, name, nr, value):
         for p in self.pinlist:
             if p.name == name:
-                self.__send_command(self.CMD.SET_PIN, [p.pin, value])
+                msg = p.msg_prefix + str(nr) + "," + str(value) + ";"
+                print(f"send {msg}")
+                self.ser.write(bytearray(msg, 'ascii'))
                 return
         print(f"pin {name} not found")
     
@@ -173,9 +251,9 @@ def main():
     print("Mobiflight device startet successful")
 
     sleep(1)
-    mf.set_pin("Led", 255)
+    mf.set_pin("Led", 13, 255)
     sleep(2)
-    mf.set_pin("Led", 0)
+    mf.set_pin("Led", 13, 0)
     sleep(5)
 
     mf.close()
