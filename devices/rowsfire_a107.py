@@ -165,10 +165,11 @@ class DREF_TYPE(Enum):
 
 
 class Button:
-    def __init__(self, nr, label, mf_button, dataref = None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.NONE):
+    def __init__(self, nr, label, mf_button, mf_pin, dataref = None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.NONE):
         self.id = nr
         self.label = label
         self.mf_button = mf_button # Mobiflight
+        self.mf_pin = mf_pin # pin number (on shift or multiplexer)
         self.dataref = dataref
         self.dreftype = dreftype
         self.type = button_type
@@ -234,8 +235,13 @@ usb_retry = False
 xp = None
 
 
-MF_SR1 = "ShiftRegister 1"
-MF_SR2 = "ShiftRegister 2"
+MF_SR1 = "ShiftRegister 1" # Output
+MF_SR2 = "ShiftRegister 2" # Output
+
+MF_MP1 = "Multiplexer 1" # Input
+MF_MP2 = "Multiplexer 2" # Input
+MF_MP3 = "Multiplexer 3" # Input
+MF_MP4 = "Multiplexer 4" # Input
 
 def create_led_list_a107():
     ledlist.append(Led(0, "APU_MASTER_ON_LED", MF_SR2, 11, "AirbusFBW/APUMaster"))
@@ -294,19 +300,71 @@ def create_led_list_a107():
 
 def create_button_list_a107():
     create_led_list_a107()
-    buttonlist.append(Button(0, "APU_MASTER", "MF_Name_APU_Master", "AirbusFBW/APUMaster", DREF_TYPE.DATA, BUTTON.TOGGLE))
-    buttonlist.append(Button(1, "APU_START", "MF_Name_APU_Start", "AirbusFBW/APUStarter", DREF_TYPE.DATA, BUTTON.TOGGLE))
-    buttonlist.append(Button(2, "APU_BLEED", "MF_Name_APU_Bleed", "AirbusFBW/AirbusFBW/APUBleedSwitch", DREF_TYPE.DATA, BUTTON.TOGGLE))
-    buttonlist.append(Button(3, "Beacon Light", "MF_Name_Beacon_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE))
-    buttonlist.append(Button(4, "Wing Light", "MF_Name_Wing_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_1, BUTTON.TOGGLE))
-    buttonlist.append(Button(5, "Nav Light", "MF_Name_Nav_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
-    buttonlist.append(Button(6, "Land Left Light", "MF_Name_Land_Left_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.TOGGLE))
-    buttonlist.append(Button(7, "Land Tight Light", "MF_Name_Land_Right_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.TOGGLE))
-    buttonlist.append(Button(8, "Nose Light", "MF_Name_Nose_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.TOGGLE))
-    buttonlist.append(Button(9, "RWY Turn Light", "MF_Name_RWY_Turn_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_6, BUTTON.TOGGLE))
-    buttonlist.append(Button(10, "Strobe Light", "MF_Name_Strobe_Light", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.TOGGLE))
-    buttonlist.append(Button(11, "Seatbelt", "MF_Name_Seatbelt", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_11, BUTTON.TOGGLE))
-    buttonlist.append(Button(12, "Smoke", "MF_Name_Smoke", "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(0, "APU_MASTER", MF_MP1, 4, "AirbusFBW/APUMaster", DREF_TYPE.DATA, BUTTON.TOGGLE))
+    buttonlist.append(Button(1, "APU_START", MF_MP1, 3, "MF_Name_APU_Start", "AirbusFBW/APUStarter", DREF_TYPE.DATA, BUTTON.TOGGLE))
+    buttonlist.append(Button(2, "APU_BLEED", MF_MP1, 6, "MF_Name_APU_Bleed", "AirbusFBW/AirbusFBW/APUBleedSwitch", DREF_TYPE.DATA, BUTTON.TOGGLE))
+    buttonlist.append(Button(3, "Beacon Light", MF_MP3, 2, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE))
+    buttonlist.append(Button(4, "Wing Light", MF_MP3, 3, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_1, BUTTON.TOGGLE))
+    buttonlist.append(Button(5, "Nav Light ON", MF_MP1, 4, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
+    buttonlist.append(Button(6, "Nav Light AUTO", MF_MP1, 5, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
+    buttonlist.append(Button(7, "Land Left Light ON", MF_MP3, 7, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.TOGGLE))
+    buttonlist.append(Button(8, "Land Left Light OFF", MF_MP3, 8, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.TOGGLE))
+    buttonlist.append(Button(9, "Land Right Light ON", MF_MP3, 9, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.TOGGLE))
+    buttonlist.append(Button(10, "Land Right Light OFF", MF_MP3, 10, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.TOGGLE))
+    buttonlist.append(Button(11, "Nose Light OFF", MF_MP3, 12, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.TOGGLE))
+    buttonlist.append(Button(12, "Nose Light TO", MF_MP3, 11, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.TOGGLE))
+    buttonlist.append(Button(13, "RWY Turn Light", MF_MP3, 6, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_6, BUTTON.TOGGLE))
+    buttonlist.append(Button(14, "Strobe Light ON", MF_MP3, 0, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.TOGGLE))
+    buttonlist.append(Button(15, "Strobe Light AUTO", MF_MP3, 1, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.TOGGLE))
+    buttonlist.append(Button(16, "Seatbelt", MF_MP3, 13, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_11, BUTTON.TOGGLE))
+    buttonlist.append(Button(17, "Ice Eng1", MF_MP1, 4, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(18, "Ice Eng2", MF_MP1, 0, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(19, "Ice Wing", MF_MP1, 2, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(20, "Pack1", MF_MP1, 7, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(21, "Pack2", MF_MP1, 5, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(22, "Fire APU", MF_MP2, 0, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(23, "Fire Eng1", MF_MP2, 1, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(24, "Fire Eng2", MF_MP3, 15, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(25, "Fire Test APU", MF_MP2, 4, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(26, "Fire Test Eng1", MF_MP2, 5, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(27, "Fire Test Eng2", MF_MP2, 3, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(28, "Adirs ON Bat", MF_MP1, 14, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(29, "Smoking Light AUTO", MF_MP4, 3, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(30, "Smoking Light OFF", MF_MP3, 14, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(31, "Calls", MF_MP2, 2, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(32, "Adirs 1-1", MF_MP4, 7, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(33, "Adirs 1-2", MF_MP4, 11, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(34, "Adirs 1-3", MF_MP4, 9, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(35, "Adirs 2-1", MF_MP4, 6, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(36, "Adirs 2-2", MF_MP4, 10, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(37, "Adirs 2-3", MF_MP4, 8, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(38, "Adirs 3-1", MF_MP4, 7, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(39, "Adirs 3-2", MF_MP4, 11, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(40, "Adirs 3-3", MF_MP4, 9, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(41, "Gnd ctrl", MF_MP1, 10, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(42, "Crewsupply", MF_MP1, 9, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(43, "Pump1", MF_MP2, 10, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(44, "Pump2", MF_MP2, 8, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(45, "Left Pump1", MF_MP2, 12, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(46, "Left Pump2", MF_MP2, 11, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(47, "Pump Modesel", MF_MP2, 9, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(48, "Right Pump1", MF_MP2, 7, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(48, "Right Pump2", MF_MP2, 6, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(50, "Bat1", MF_MP2, 15, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(51, "Bat2", MF_MP2, 14, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(52, "APU Gen", MF_MP1, 8, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(53, "IR1", MF_MP1, 13, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(54, "IR2", MF_MP1, 12, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(55, "IR3", MF_MP1, 11, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(56, "ExtPwr", MF_MP2, 13, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(57, "TCAS TA", MF_MP4, 13, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(58, "TCAS TA/TR", MF_MP4, 12, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(59, "Exit ON", MF_MP1, 5, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(60, "Exit OFF", MF_MP1, 4, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(61, "Wiper OFF", MF_MP4, 14, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button(62, "Wiper Fast", MF_MP4, 15, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    #buttonlist.append(Button(64, "Wiper Slow", MF_MP4, 14, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE)) # missing in config
+    buttonlist.append(Button(63, "Flap 3", MF_MP1, 15, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
 
 
 def set_button_led_lcd(device, dataref, v):
