@@ -6,8 +6,6 @@ from enum import Enum, IntEnum
 from threading import Thread, Event, Lock
 from time import sleep
 
-import hid
-
 import json
 import time
 
@@ -24,10 +22,13 @@ XPLANE_REST_URL = "http://localhost:8086/api/v2"
 
 MOBIFLIGHT_SERIAL = "SN-301-533"
 
+xp = None
+
 class XP_Websocket:
     def __init__(self, rest_url, ws_url):
-        self.dataref_ids = {}
-        self.cmdref_ids = {}
+        self.led_dataref_ids = {}  # dict: data_id -> led / ledarray
+        self.buttonref_ids = {} # dict: button -> cmd_id
+        #self.buttonref_ids = {} # dict: button -> data_id
         self.rest_url = rest_url
         self.ws_url = ws_url
         self.xp = Session()
@@ -36,6 +37,7 @@ class XP_Websocket:
         self.iddict = {}
         self.req_id = 0
         self.ws = None
+        self.datacache = {}
 
 
     def dataref_id_fetch(self, dataref):
@@ -59,7 +61,7 @@ class XP_Websocket:
             id = self.dataref_id_fetch(id)
 
         set_msg = {
-            "data": value
+            "data": int(value)
         }
         if index:
             xpdr_code_response = self.xp.patch(self.rest_url + "/datarefs/" + str(id) + "/value", data=json.dumps(set_msg), params={"index":index})
@@ -103,7 +105,7 @@ class XP_Websocket:
                 "type": "dataref_subscribe_values",
                 "params": {
                     "datarefs": [{"id": ref_id} for ref_id in dataref_list]
-                    #"commands": [{"id": ref_id_cmd} for ref_id_cmd in cmdref_ids]
+                    #"commands": [{"id": ref_id_cmd} for ref_id_cmd in buttonref_ids]
                 }
             }
             await ws.send(json.dumps(subscribe_msg))
@@ -143,7 +145,8 @@ class BUTTON(Enum):
     SEND_3 = 5
     SEND_4 = 6
     SEND_5 = 7
-    NONE = 5 # for testing
+    HOLD   = 8
+    NONE = 10 # for testing
 
 
 class DREF_TYPE(Enum):
@@ -174,6 +177,10 @@ class Button:
         self.dataref = dataref
         self.dreftype = dreftype
         self.type = button_type
+
+
+    def __str__(self):
+            return(f"{self.label} -> {self.dataref} {self.type}")
 
 class Led:
     def __init__(self, nr, label, mf_button, mf_pin, dataref, dreftype = DREF_TYPE.NONE, eval = None):
@@ -325,7 +332,7 @@ def create_button_list_a107():
     buttonlist.append(Button(22, "Fire APU", MF_MP2, 0, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
     buttonlist.append(Button(23, "Fire Eng1", MF_MP2, 1, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE))
     buttonlist.append(Button(24, "Fire Eng2", MF_MP3, 15, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.TOGGLE))
-    buttonlist.append(Button(25, "Fire Test APU", MF_MP2, 4, "AirbusFBW/FireTestAPU", DREF_TYPE.CMD, BUTTON.TOGGLE))
+    buttonlist.append(Button(25, "Fire Test APU", MF_MP2, 4, "AirbusFBW/FireTestAPU", DREF_TYPE.CMD, BUTTON.HOLD))
     buttonlist.append(Button(26, "Fire Test Eng1", MF_MP2, 5, "AirbusFBW/FireTestENG1", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(27, "Fire Test Eng2", MF_MP2, 3, "AirbusFBW/FireTestENG2", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(28, "Adirs ON Bat", MF_MP1, 14, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
@@ -397,34 +404,37 @@ def xplane_get_dataref_ids(xp):
                 continue
             if l.dreftype == DREF_TYPE.CMD:
                 continue
+            xp.datacache[l.dataref] = 0
             id = xp.dataref_id_fetch(l.dataref)
             #print(f'name: {l.label}, id: {id}')
-            if id in xp.dataref_ids:
+            if id in xp.led_dataref_ids:
                 continue
             if l.dreftype.value >= DREF_TYPE.ARRAY_0.value:
                 larray = []
                 for l2 in ledlist:
                     if l2.dataref == l.dataref:
                         larray.append(l2)
-                xp.dataref_ids[id] = larray.copy()
+                xp.led_dataref_ids[id] = larray.copy()
             else:
-                xp.dataref_ids[id] = l
+                xp.led_dataref_ids[id] = l
     print("done")
-    print(f"[A107] getting cmd dataref ids ... ", end="")
-    for l in ledlist:
-        if l.dataref == None:
+    print(f"[A107] getting button cmd & dataref ids ... ", end="")
+    for b in buttonlist:
+        if b.dataref == None:
             continue
-        if l.dreftype != DREF_TYPE.CMD:
-            continue
-        id = xp.xp_cmdref_ids(l.dataref)
+        if b.dreftype == DREF_TYPE.CMD:
+            id = xp.command_id_fetch(b.dataref)
+        elif b.dreftype == DREF_TYPE.DATA:
+            id = xp.dataref_id_fetch(b.dataref)
+            xp.datacache[b.dataref] = 0
         #print(f'name: {l.label}, id: {id}')
-        if id in xp.cmdref_ids:
+        if id in xp.buttonref_ids:
             continue
-        xp.cmdref_ids[id] = l
+        xp.buttonref_ids[b] = id
     print("done")
 
 
-def xplane_ws_listener(data, dataref_ids):
+def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
     #print(f"[A107] recevice: {data}")
     if data.get("type") != "dataref_update_values":
         print(f"[A107] not defined {data}")
@@ -433,8 +443,8 @@ def xplane_ws_listener(data, dataref_ids):
     for ref_id_str, value in data["data"].items():
         ref_id = int(ref_id_str)
         print(f"[A107] searching for {ref_id}...", end='')
-        if ref_id in dataref_ids:
-            ledobj = dataref_ids[ref_id]
+        if ref_id in led_dataref_ids:
+            ledobj = led_dataref_ids[ref_id]
 
             if type(value) is list:
                 if type(ledobj) != list:
@@ -458,18 +468,52 @@ def xplane_ws_listener(data, dataref_ids):
                     s = 'value' + ledobj.eval
                     value = eval(s)
                 print(f" found: {ledobj.label} = {value}")
+                xp.datacache[ledobj.dataref] = value
                 #TODO: update LED on panel 2/2
         else:
             print(f" not found")
 
 
+def send_change_to_xp(name, channel, value):
+    global xp
+    for b in buttonlist:
+        if name == b.mf_button and channel == b.mf_pin:
+            if b.type == BUTTON.NONE:
+                break
+
+            if b.dreftype == DREF_TYPE.DATA:
+                # TODO arrays in datacache
+                if b.type == BUTTON.TOGGLE and value == 0:
+                    val = int(not xp.datacache[b.dataref])
+                    xp.dataref_set_value(xp.buttonref_ids[b], val)
+                    break
+
+                if b.type == BUTTON.HOLD or b.type == BUTTON.SWITCH:
+                    xp.datacache[b.dataref] = value
+                    xp.dataref_set_value(xp.buttonref_ids[b], value)
+                    break
+
+            if b.dreftype == DREF_TYPE.CMD:
+                print(f"dref cmd {value} {b.type}")
+                if b.type == BUTTON.TOGGLE and value:
+                    print("send cmd")
+                    xp.command_activate_duration(xp.buttonref_ids[b], 0.5)
+                if b.type == BUTTON.HOLD and value:
+                    print("send cmd")
+                    xp.command_activate_duration(xp.buttonref_ids[b], 4)
+            break
+
+
 def mf_value_changed(cmd, name, arg):
     if cmd == mf.MF.CMD.BUTTON_CHANGE:
-        print(f"Value changed (Button): {name}, {arg[0]}") # value
+        print(f"Value changed (Button): {name}, {int(arg[0])}") # value
+        #send_change_to_xp(MF_MP2, 4, int(arg[0])) # fake APU Test FIRE
+        send_change_to_xp(MF_MP1, 4, int(arg[0])) # fale APU Master
     elif cmd == mf.MF.CMD.DIGINMUX_CHANGE:
-        print(f"Value changed (DigInMux): {name}, {arg[0]}, {arg[1]}") # channel, value
+        print(f"Value changed (DigInMux): {name}, {arg[0]}, {int(arg[1])}") # channel, value
+        send_change_to_xp(name, arg[0], int(arg[1]))
     elif cmd == mf.MF.CMD.ANALOG_CHANGE:
-        print(f"Value changed (Analog): {name}, {arg[0]}") # value
+        print(f"Value changed (Analog): {name}, {int(arg[0])}") # value
 
 
 class device:
@@ -481,13 +525,15 @@ class device:
 
     def connected(self):
         global xplane_connected
+        global xp
         print(f"[A107] X-Plane connected")
         xplane_get_dataref_ids(self.xp)
         print(f"[A107] subsrcibe datarefs... ", end="")
-        t = Thread(target=self.xp.datarefs_subscribe, args=(self.xp.dataref_ids, xplane_ws_listener))
+        t = Thread(target=self.xp.datarefs_subscribe, args=(self.xp.led_dataref_ids, xplane_ws_listener))
         t.start()
         print(f"done")
         xplane_connected = True
+        xp = self.xp
 
 
     def disconnected(self):
@@ -505,12 +551,12 @@ class device:
         strobe = self.xp.dataref_id_fetch("AirbusFBW/OHPLightSwitches")
         antiice = self.xp.command_id_fetch("toliss_airbus/antiicecommands/WingToggle")
         while True:
-            self.xp.dataref_set_value(apu_master, 1)
-            self.xp.dataref_set_value(strobe, 1, 7)
-            self.xp.command_activate_duration(antiice, 1)
+            #self.xp.dataref_set_value(apu_master, 1)
+            #self.xp.dataref_set_value(strobe, 1, 7)
+            #self.xp.command_activate_duration(antiice, 1)
             time.sleep(2)
-            self.xp.dataref_set_value(apu_master, 0)
-            self.xp.dataref_set_value(strobe, 0, 7)
+            #self.xp.dataref_set_value(apu_master, 0)
+            #self.xp.dataref_set_value(strobe, 0, 7)
             time.sleep(2)
 
 
