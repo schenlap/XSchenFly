@@ -186,7 +186,7 @@ class MF:
                        self.CMD.BUTTON_CHANGE]:
                 #print(f"CHANGE:{cmd} {msg_split[1:]}")
                 if self.value_changed_cb and self.serialnumber:
-                    self.value_changed_cb(msg_split[1],msg_split[2])
+                    self.value_changed_cb(cmd, msg_split[1], msg_split[2:])
     
 
     def __startup_device(self):
@@ -228,8 +228,13 @@ class MF:
         self.ser.close()
 
 
-def mf_value_changed(pin, value):
-    print(f"Value changed: {pin}, {value}")
+def mf_value_changed(cmd, name, arg):
+    if cmd == MF.CMD.BUTTON_CHANGE:
+        print(f"Value changed (Button): {name}, {arg[0]}") # value
+    elif cmd == MF.CMD.DIGINMUX_CHANGE:
+        print(f"Value changed (DigInMux): {name}, {arg[0]}, {arg[1]}") # channel, value
+    elif cmd == MF.CMD.ANALOG_CHANGE:
+        print(f"Value changed (Analog): {name}, {arg[0]}") # value
 
 
 def main():
