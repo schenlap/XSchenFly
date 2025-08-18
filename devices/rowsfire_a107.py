@@ -23,6 +23,7 @@ XPLANE_REST_URL = "http://localhost:8086/api/v2"
 MOBIFLIGHT_SERIAL = "SN-301-533"
 
 xp = None
+mf_dev = None
 
 class XP_Websocket:
     def __init__(self, rest_url, ws_url):
@@ -123,11 +124,11 @@ class XP_Websocket:
                 try:
                     msg = await ws.recv()
                     data = json.loads(msg)
-                    if update_callback:
-                        update_callback(data, dataref_list)
                 except Exception as e:
                     print(f"[A107] Fehler im Listener: {e}")
                     break
+                if update_callback:
+                    update_callback(data, dataref_list)
 
 
 #@unique
@@ -183,10 +184,10 @@ class Button:
             return(f"{self.label} -> {self.dataref} {self.type}")
 
 class Led:
-    def __init__(self, nr, label, mf_button, mf_pin, dataref, dreftype = DREF_TYPE.NONE, eval = None):
+    def __init__(self, nr, label, mf_name, mf_pin, dataref, dreftype = DREF_TYPE.NONE, eval = None):
         self.id = nr
         self.label = label
-        self.mf_button = mf_button # Mobiflight
+        self.mf_name = mf_name # Mobiflight
         self.mf_pin = mf_pin # pin number (on shift or multiplexer)
         self.dataref = dataref
         self.dreftype = dreftype
@@ -199,21 +200,23 @@ ledlist = []
 device_config = DEVICEMASK.NONE
 
 
-def rawsfire_a107_set_leds(device, leds, brightness):
+def rawsfire_a107_set_leds(leds, brightness):
     if isinstance(leds, list):
         for i in range(len(leds)):
-            rawsfire_a107_set_led(device, leds[i], brightness)
+            rawsfire_a107_set_led(leds[i], brightness)
     else:
-        rawsfire_a107_set_led(device, leds, brightness)
+        rawsfire_a107_set_led(leds, brightness)
 
 
-def rawsfire_a107_set_led(device, led, brightness):
-    return # TODO
-    if led.value < 100: # FCU
-        data = [0x02, 0x10, 0xbb, 0, 0, 3, 0x49, led.value, brightness, 0,0,0,0,0]
-    if 'data' in locals():
-      cmd = bytes(data)
-      device.write(cmd)
+def rawsfire_a107_set_led(led, brightness):
+    global mf_dev
+
+    if brightness == 1:
+        brightness = 255
+    if brightness > 255:
+        brightness = 255
+
+    mf_dev.set_pin(led.mf_name, led.mf_pin, brightness)
 
 
 def lcd_init(ep):
@@ -372,24 +375,6 @@ def create_button_list_a107():
     buttonlist.append(Button(62, "Wiper Fast", MF_MP4, 15, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SEND_2))
     #buttonlist.append(Button(64, "Wiper Slow", MF_MP4, 14, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SEND1)) # missing in config
     buttonlist.append(Button(63, "Flap 3", MF_MP1, 15, "toliss_airbus/gpwscommands/Flap3Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
-
-
-def set_button_led_lcd(device, dataref, v):
-    global led_brightness
-    for b in buttonlist:
-        if b.dataref == dataref:
-            if b.led == None:
-                break
-            if v >= 255:
-                v = 255
-            print(f'led: {b.led}, value: {v}')
-
-            rawsfire_a107_set_leds(device, b.led, int(v))
-            if b.led == Leds.BACKLIGHT:
-                rawsfire_a107_set_led(device, Leds.EXPED_YELLOW, int(v))
-                print(f'set led brigthness: {b.led}, value: {v}')
-                led_brightness = v
-            break
  
 
 def startupscreen(device, device_config, version, new_version):
@@ -460,8 +445,9 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                             if l2.eval:
                                 s = 'value_new' + l2.eval
                                 value_new = eval(s)
+                                #todo set datachache
                             print(f"[A107]                       array value[{idx}] of {l2.label} = {value_new}")
-                            #TODO: update LED on panel 1/2
+                            rawsfire_a107_set_led(l2, value_new)
                     idx += 1
             else:
                 if ledobj.eval != None:
@@ -469,7 +455,7 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                     value = eval(s)
                 print(f" found: {ledobj.label} = {value}")
                 xp.datacache[ledobj.dataref] = value
-                #TODO: update LED on panel 2/2
+                rawsfire_a107_set_led(ledobj, value)
         else:
             print(f" not found")
 
@@ -562,8 +548,7 @@ class device:
 
     def init_device(self, version: str = None, new_version: str = None):
         global xplane_connected
-        global device_config
-        global datacache
+        global mf_dev
 
         self.version = version
         self.new_version = new_version

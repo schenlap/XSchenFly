@@ -216,9 +216,10 @@ class MF:
 
     def set_pin(self, name, nr, value):
         for p in self.pinlist:
+            print(f"pin: {p.name} == {name}")
             if p.name == name:
                 msg = p.msg_prefix + str(nr) + "," + str(value) + ";"
-                print(f"send {msg}")
+                #print(f"send {msg}")
                 self.ser.write(bytearray(msg, 'ascii'))
                 return
         print(f"pin {name} not found")
