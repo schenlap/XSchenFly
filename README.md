@@ -1,5 +1,6 @@
 # XSchenFly
 Use cockpit hardware devices on Linuc and Mac for X-Plane 12 Toliss Airbus.
+It combines the functionality of https://github.com/schenlap/winwing_mcdu  and https://github.com/schenlap/winwing_fcu and adds new devices. You only have to start one script now to get all supported devices working.
 
 ## Status
 
