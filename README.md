@@ -1,12 +1,11 @@
 # XSchenFly
-Use winwing mcdu / fcu / efis-l / efis-r on Linuc and Mac for X-Plane Toliss Airbus.
+Use cockpit hardware devices on Linuc and Mac for X-Plane 12 Toliss Airbus.
 
 ## Status
 
 All buttons, leds and lcd displays work the same way as in X-Plane.<br>
 Tested with:
  * XP12 under linux (debian trixie)
- * XP11 under linux (debian bookworm)
  * XP12 under MacOs (Sequoia 15.0.1)
  * Toliss A319, A320Neo, A321Neo, A339, A340-600
 
