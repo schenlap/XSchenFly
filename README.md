@@ -36,7 +36,7 @@ For Discussions use https://forums.x-plane.org/forums/topic/324813-winwing-mcdu-
 2. copy `udev/71-winwing.rules` to `/etc/udev/rules.d`  
 `sudo cp udev/71-winwing.rules /etc/udev/rules.d/`
 3. install dependencies (on debian based systems)  
-`sudo aptitide install python3-hid python3-serial libhidapi-hidraw0`
+`sudo aptitide install python3-hid python3-serial libhidapi-hidraw0 python3-websockets`
 5. start script (with udev rule no sudo needed): `python3 ./XSchenFly.py` when X-Plane with Toliss aircraft is loaded.
 
 
@@ -48,6 +48,7 @@ For Discussions use https://forums.x-plane.org/forums/topic/324813-winwing-mcdu-
 4. install dependencies
 `python3 -m pip install hid`
 `python3 -m pip install requests`
+`python3 -m pip install websockets`
 5. brew install hidapi
 6. let hid find hidapi: `ln -s /opt/homebrew/lib/libhidapi.dylib .`
 7. start script with: `python3 ./XSchenFly.py` when X-Plane with Toliss aircraft is loaded.
