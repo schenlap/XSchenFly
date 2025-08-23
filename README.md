@@ -2,14 +2,32 @@
 Use winwing mcdu / fcu / efis-l / efis-r on Linuc and Mac for X-Plane Toliss Airbus.
 
 ## Status
-The scripts fetsches all necessery data from mcdu and displays a mcdu unit in the console and prints all text on winwing mcdu. 
-From V1.4 on, the scripts polls for new versions from github and displays it after startup if a new version is available.
 
-For Discussions use https://forums.x-plane.org/forums/topic/324814-winwing-mcdu-on-x-plane-for-mac-studio-and-linux/
+All buttons, leds and lcd displays work the same way as in X-Plane.<br>
+Tested with:
+ * XP12 under linux (debian trixie)
+ * XP11 under linux (debian bookworm)
+ * XP12 under MacOs (Sequoia 15.0.1)
+ * Toliss A319, A320Neo, A321Neo, A339, A340-600
+
+Supported Hardware:
+ * Rowsfire A107: work in progress (awaiting shipment)
+ * Winwing MCDU: fully supported
+ * Winwing FCU: fully supported
+ * Winwing EFIS-R: fully supported
+ * Winwing EFIS-L: fully supported
+ * Wingflex RMP: is on todo list
+
+
+![fcu demo image](./documentation/fcu_demo.gif)
+
+Change brightness with the two brightness knobs in the cockpit.
+![fcu demo image](./documentation/xplane_fcu_brightness.png)
 
 
 ![mcdu demo image](./documentation/A319MCDU1.jpg)
 
+For Discussions use https://forums.x-plane.org/forums/topic/324813-winwing-mcdu-on-x-plane-for-mac-studio-and-linux/
 
 ## Installation
 
@@ -51,7 +69,7 @@ Use at your own risk. Updates to the winwing devices can make the script incompa
 TODO: The data sent in the USB protocol by SimApp Pro has not yet been fully implemented, only to the extent that it currently works.
 
 ## Next steps
- * TODO 
+ * bring all devices to websockets communication
 
 ## Contact
 <memo_5_@gmx.at> (without the two underscores!) or as pm in https://forums.x-plane.org, user memo5.
