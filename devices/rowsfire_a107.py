@@ -526,7 +526,7 @@ class device:
         global xplane_connected
         xplane_connected = False
         print(f"[A107] X-Plane disconnected")
-        startupscreen(self.usb_mgr.device, device_config, self.version, self.new_version)
+        startupscreen(mf_dev, device_config, self.version, self.new_version)
 
 
     def cyclic_worker(self):
@@ -574,7 +574,7 @@ class device:
 
         create_button_list_a107()
     
-        #startupscreen(self.usb_mgr.device, device_config, version, new_version)
+        startupscreen(mf_dev, device_config, version, new_version)
 
         cyclic_thread = Thread(target=self.cyclic_worker)
         cyclic_thread.start()
