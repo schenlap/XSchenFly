@@ -49,9 +49,10 @@ For Discussions use https://forums.x-plane.org/forums/topic/324813-winwing-mcdu-
 `python3 -m pip install hid`
 `python3 -m pip install requests`
 `python3 -m pip install websockets`
-5. brew install hidapi
-6. let hid find hidapi: `ln -s /opt/homebrew/lib/libhidapi.dylib .`
-7. start script with: `python3 ./XSchenFly.py` when X-Plane with Toliss aircraft is loaded.
+`python3 -m pip install serial`
+6. brew install hidapi
+7. let hid find hidapi: `ln -s /opt/homebrew/lib/libhidapi.dylib .`
+8. start script with: `python3 ./XSchenFly.py` when X-Plane with Toliss aircraft is loaded.
 
 
 ## Use
