@@ -253,7 +253,7 @@ MF_MP2 = "Multiplexer 2" # Input
 MF_MP3 = "Multiplexer 3" # Input
 MF_MP4 = "Multiplexer 4" # Input
 
-def create_led_list_a107():
+def create_led_list_a107():  # TODO check sim/cockpit/electrical/avionics_on == 1
     ledlist.append(Led(0, "APU_MASTER_ON_LED", MF_SR2, 11, "AirbusFBW/APUMaster"))
     ledlist.append(Led(1, "APU_MASTER_FAULT_LED", MF_SR2, 10, None))
     ledlist.append(Led(2, "APU_STARTER_ON_LED", MF_SR2, 19, "AirbusFBW/APUStarter"))
@@ -262,19 +262,19 @@ def create_led_list_a107():
     ledlist.append(Led(5, "AIR_APU_BLEED_ON_LED", MF_SR2, 7, "AirbusFBW/APUBleedSwitch"))
     ledlist.append(Led(6, "AIR_APU_BLEED_FAULT_LED", MF_SR2, 6, None))
     ledlist.append(Led(7, "AIR_PACK1_BLEED_OFF_LED", MF_SR2, 5, "AirbusFBW/Pack1Switch", DREF_TYPE.DATA, "==0"))
-    ledlist.append(Led(8, "AIR_PACK1_BLEED_FAULT_LED", MF_SR2, 4, None))
+    ledlist.append(Led(8, "AIR_PACK1_BLEED_FAULT_LED", MF_SR2, 4, "AirbusFBW/OHPLightsATA21_Raw", DREF_TYPE.ARRAY_7, "&2"))
     ledlist.append(Led(9, "AIR_PACK2_BLEED_OFF_LED", MF_SR2, 9, "AirbusFBW/Pack2Switch", DREF_TYPE.DATA, "==0"))
-    ledlist.append(Led(10, "AIR_PACK2_BLEED_FAULT_LED", MF_SR2, 0, None))
+    ledlist.append(Led(10, "AIR_PACK2_BLEED_FAULT_LED", MF_SR2, "AirbusFBW/OHPLightsATA21_Raw", DREF_TYPE.ARRAY_9, "&2"))
     ledlist.append(Led(11, "ADIRS_ON_BAT_LED", MF_SR1, 1, "AirbusFBW/ADIRUOnBat"))
     ledlist.append(Led(12, "GPWS_FLAP3_ON_LED", MF_SR1, 5, "AirbusFBW/GPWSSwitchArray", DREF_TYPE.ARRAY_3))
     ledlist.append(Led(13, "RCDR_GND_CTL_ON_LED", MF_SR1, 6, "AirbusFBW/CvrGndCtrl"))
     ledlist.append(Led(14, "OXYGEN_CREW_SUPPLY_OFF_LED", MF_SR1, 7, "AirbusFBW/CrewOxySwitch", DREF_TYPE.DATA, "==0"))
-    ledlist.append(Led(15, "ANTIICE_WING_ON_LED", MF_SR2, 13, None))
-    ledlist.append(Led(16, "ANTIICE_WING_FAULT_LED", MF_SR2, 12, None))
-    ledlist.append(Led(17, "ANTIICE_ENG1_ON_LED", MF_SR2, 15, None))
-    ledlist.append(Led(18, "ANTIICE_ENG1_FAULT_LED", MF_SR2, 14, None))
-    ledlist.append(Led(19, "ANTIICE_ENG2_ON_LED", MF_SR2, 17, None))
-    ledlist.append(Led(20, "ANTIICE_ENG2_FAULT_LED", MF_SR2, 8, None))
+    ledlist.append(Led(15, "ANTIICE_WING_ON_LED", MF_SR2, 13, "AirbusFBW/WAILights", DREF_TYPE.DATA, "&1"))
+    ledlist.append(Led(16, "ANTIICE_WING_FAULT_LED", MF_SR2, 12, "AirbusFBW/WAILights", DREF_TYPE.DATA, "&2"))
+    ledlist.append(Led(17, "ANTIICE_ENG1_ON_LED", MF_SR2, 15, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA, "&1"))
+    ledlist.append(Led(18, "ANTIICE_ENG1_FAULT_LED", MF_SR2, 14, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA, "&2"))
+    ledlist.append(Led(19, "ANTIICE_ENG2_ON_LED", MF_SR2, 17, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA, "&1"))
+    ledlist.append(Led(20, "ANTIICE_ENG2_FAULT_LED", MF_SR2, 8, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA, "&2"))
     ledlist.append(Led(21, "ELEC_BAT1_OFF_LED", MF_SR1, 28, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0, "==1"))
     ledlist.append(Led(22, "ELEC_BAT1_FAULT_LED", MF_SR1, 29, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0, "==3"))
     ledlist.append(Led(23, "ELEC_BAT2_OFF_LED", MF_SR1, 30, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_1, "==1"))
