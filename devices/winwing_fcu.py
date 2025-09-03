@@ -433,7 +433,7 @@ def create_button_list_fcu():
     buttonlist.append(Button(24, "VS PULL", "AirbusFBW/PullVSSel", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(25, "ALT 100", "AirbusFBW/ALT100_1000", DREF_TYPE.DATA, BUTTON.SEND_0))
     buttonlist.append(Button(26, "ALT 1000", "AirbusFBW/ALT100_1000", DREF_TYPE.DATA, BUTTON.SEND_1))
-    buttonlist.append(Button(27, "BRIGHT", "AirbusFBW/SupplLightLevelRehostats[0]", DREF_TYPE.DATA, BUTTON.NONE, [Leds.BACKLIGHT, Leds.EFISR_BACKLIGHT, Leds.EFISL_BACKLIGHT]))
+    buttonlist.append(Button(27, "BRIGHT", "AirbusFBW/SupplLightLevelRehostats[0]", DREF_TYPE.DATA, BUTTON.NONE, [Leds.BACKLIGHT, Leds.EXPED_YELLOW, Leds.EFISR_BACKLIGHT, Leds.EFISL_BACKLIGHT]))
     buttonlist.append(Button(27, "BRIGHT_LCD", "AirbusFBW/SupplLightLevelRehostats[1]", DREF_TYPE.DATA, BUTTON.NONE, [Leds.SCREEN_BACKLIGHT, Leds.EFISR_SCREEN_BACKLIGHT, Leds.EFISL_SCREEN_BACKLIGHT]))
     #buttonlist.append(Button(27, "BRIGHT", "sim/cockpit2/electrical/instrument_brightness_ratio_manual[14]", DREF_TYPE.DATA, BUTTON.NONE, Leds.BACKLIGHT)) # Laminar A330
     #buttonlist.append(Button(27, "BRIGHT_LCD", "sim/cockpit2/electrical/instrument_brightness_ratio_manual[10]", DREF_TYPE.DATA, BUTTON.NONE, Leds.SCREEN_BACKLIGHT)) # Laminar A330
