@@ -167,6 +167,7 @@ class DREF_TYPE(Enum):
     ARRAY_10 = 20
     ARRAY_11 = 21
     ARRAY_12 = 22
+    ARRAY_13 = 23
 
 
 class Button:
@@ -254,8 +255,9 @@ MF_MP3 = "Multiplexer 3" # Input
 MF_MP4 = "Multiplexer 4" # Input
 
 def create_led_list_a107():  # TODO check sim/cockpit/electrical/avionics_on == 1
-    ledlist.append(Led(0, "APU_MASTER_ON_LED", MF_SR2, 11, "AirbusFBW/APUMaster"))
-    ledlist.append(Led(1, "APU_MASTER_FAULT_LED", MF_SR2, 10, None))
+    #ledlist.append(Led(0, "APU_MASTER_ON_LED", MF_SR2, 11, "AirbusFBW/APUMaster"))
+    ledlist.append(Led(1, "APU_MASTER_ON_LED", MF_SR2, 11, "AirbusFBW/OHPLightsATA49_Raw", DREF_TYPE.ARRAY_0))
+    ledlist.append(Led(1, "APU_MASTER_FAULT_LED", MF_SR2, 10, "AirbusFBW/OHPLightsATA49_Raw", DREF_TYPE.ARRAY_1))
     ledlist.append(Led(2, "APU_STARTER_ON_LED", MF_SR2, 19, "AirbusFBW/APUStarter"))
     ledlist.append(Led(3, "APU_STARTER_AVAIL_LED", MF_SR2, 18, "AirbusFBW/APUAvail"))
     ledlist.append(Led(4, "APU_GEN_OFF_LED",  MF_SR2, 3, "AirbusFBW/APUGenOHPArray", DREF_TYPE.ARRAY_0, "==0"))
@@ -295,8 +297,8 @@ def create_led_list_a107():  # TODO check sim/cockpit/electrical/avionics_on == 
     ledlist.append(Led(36, "FUEL_R_PUMP2_FAULT_LED", MF_SR1, 26, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_5, "==3"))
     ledlist.append(Led(37, "FUEL_MODE_SEL_OFF_LED", MF_SR1, 21, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_6, "==1"))
     ledlist.append(Led(38, "FUEL_MODE_SEL_FAULT_LED", MF_SR1, 20, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_6, "==3"))
-    ledlist.append(Led(39, "FIRE_ENG1_ON_LED", MF_SR1, 2, None, DREF_TYPE.ARRAY_6))
-    ledlist.append(Led(40, "FIRE_ENG2_ON_LED", MF_SR1, 4, None, DREF_TYPE.ARRAY_6))
+    ledlist.append(Led(39, "FIRE_ENG1_ON_LED", MF_SR1, 2, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_11))
+    ledlist.append(Led(40, "FIRE_ENG2_ON_LED", MF_SR1, 4, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_13))
     ledlist.append(Led(41, "FIRE_APU_ON_LED", MF_SR1, 3, "AirbusFBW/APUOnFire"))
     ledlist.append(Led(42, "ADIRS_IR1_ALTN_LED", MF_SR1, 9, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_6))
     ledlist.append(Led(43, "ADIRS_IR1_FAULT_LED", MF_SR1, 0, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_7))
@@ -304,8 +306,8 @@ def create_led_list_a107():  # TODO check sim/cockpit/electrical/avionics_on == 
     ledlist.append(Led(45, "ADIRS_IR2_FAULT_LED", MF_SR1, 12, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_9))
     ledlist.append(Led(46, "ADIRS_IR3_ALTN_LED", MF_SR1, 11, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_10))
     ledlist.append(Led(47, "ADIRS_IR3_FAULT_LED", MF_SR1, 10, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_11))
-    ledlist.append(Led(48, "APU_GEN_FAULT_LED",  MF_SR2, 2, None, DREF_TYPE.ARRAY_0, "==0"))
-    ledlist.append(Led(49, "EMERGENCY EXIT LIGHT",  MF_SR2, 22, None, DREF_TYPE.ARRAY_0, "==0"))
+    ledlist.append(Led(48, "APU_GEN_FAULT_LED",  MF_SR2, 2, "AirbusFBW/OHPLightsATA24_Raw", DREF_TYPE.ARRAY_5))
+    ledlist.append(Led(49, "EMERGENCY EXIT LIGHT OFF",  MF_SR2, 22, "AirbusFBW/OHPLightsATA31_Raw", DREF_TYPE.ARRAY_12, "==0"))
 
 
 def create_button_list_a107():
