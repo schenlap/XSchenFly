@@ -11,13 +11,21 @@ Tested with:
  * Toliss A319, A320Neo, A321Neo, A339, A340-600
 
 Supported Hardware:
- * Rowsfire A107: work in progress (awaiting shipment)
+ * Rowsfire A107: work in progress
+   * BAT1&2 volatege is missing
+   * BAT1&2 button - I did not find the correct dataref yet
+   * APU GEN button - I did not find the correct dataref of yet
+   * APU Fire indication - I did not find the correct dataref yet
+   * APU Bleed Fault indication - I did not find the correct dataref yet
+   * IR1-3 switches: ATT can not be selected
+   * TACS switch - I did not find the correct dataref yet
  * Winwing MCDU: fully supported
  * Winwing FCU: fully supported
  * Winwing EFIS-R: fully supported
  * Winwing EFIS-L: fully supported
  * Wingflex RMP: is on todo list
 
+![A107 image](./documentation/A107.png)
 
 ![fcu demo image](./documentation/fcu_demo.gif)
 
@@ -26,6 +34,8 @@ Change brightness with the two brightness knobs in the cockpit.
 
 
 ![mcdu demo image](./documentation/A319MCDU1.jpg)
+
+
 
 For Discussions use https://forums.x-plane.org/forums/topic/324813-winwing-mcdu-on-x-plane-for-mac-studio-and-linux/
 
