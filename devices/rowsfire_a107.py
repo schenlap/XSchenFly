@@ -171,6 +171,7 @@ class DREF_TYPE(Enum):
     ARRAY_11 = 21
     ARRAY_12 = 22
     ARRAY_13 = 23
+    DATA_MULTIPLE = 24 # more leds use the same dataref
 
 
 class Button:
@@ -274,12 +275,12 @@ def create_led_list_a107():  # TODO check sim/cockpit/electrical/avionics_on == 
     ledlist.append(Led(12, "GPWS_FLAP3_ON_LED", MF_SR1, 5, "AirbusFBW/GPWSSwitchArray", DREF_TYPE.ARRAY_3))
     ledlist.append(Led(13, "RCDR_GND_CTL_ON_LED", MF_SR1, 6, "AirbusFBW/CvrGndCtrl"))
     ledlist.append(Led(14, "OXYGEN_CREW_SUPPLY_OFF_LED", MF_SR1, 7, "AirbusFBW/CrewOxySwitch", DREF_TYPE.DATA, "==0"))
-    ledlist.append(Led(15, "ANTIICE_WING_ON_LED", MF_SR2, 13, "AirbusFBW/WAILights", DREF_TYPE.DATA, "&1"))
-    ledlist.append(Led(16, "ANTIICE_WING_FAULT_LED", MF_SR2, 12, "AirbusFBW/WAILights", DREF_TYPE.DATA, "&2"))
-    ledlist.append(Led(17, "ANTIICE_ENG1_ON_LED", MF_SR2, 15, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA, "&1"))
-    ledlist.append(Led(18, "ANTIICE_ENG1_FAULT_LED", MF_SR2, 14, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA, "&2"))
-    ledlist.append(Led(19, "ANTIICE_ENG2_ON_LED", MF_SR2, 17, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA, "&1"))
-    ledlist.append(Led(20, "ANTIICE_ENG2_FAULT_LED", MF_SR2, 8, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA, "&2"))
+    ledlist.append(Led(15, "ANTIICE_WING_ON_LED", MF_SR2, 13, "AirbusFBW/WAILights", DREF_TYPE.DATA_MULTIPLE, "&1"))
+    ledlist.append(Led(16, "ANTIICE_WING_FAULT_LED", MF_SR2, 12, "AirbusFBW/WAILights", DREF_TYPE.DATA_MULTIPLE, "&2"))
+    ledlist.append(Led(17, "ANTIICE_ENG1_ON_LED", MF_SR2, 15, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA_MULTIPLE, "&1"))
+    ledlist.append(Led(18, "ANTIICE_ENG1_FAULT_LED", MF_SR2, 14, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA_MULTIPLE, "&2"))
+    ledlist.append(Led(19, "ANTIICE_ENG2_ON_LED", MF_SR2, 17, "AirbusFBW/ENG2AILights", DREF_TYPE.DATA_MULTIPLE, "&1"))
+    ledlist.append(Led(20, "ANTIICE_ENG2_FAULT_LED", MF_SR2, 8, "AirbusFBW/ENG2AILights", DREF_TYPE.DATA_MULTIPLE, "&2"))
     ledlist.append(Led(21, "ELEC_BAT1_OFF_LED", MF_SR1, 28, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0, "==1"))
     ledlist.append(Led(22, "ELEC_BAT1_FAULT_LED", MF_SR1, 29, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0, "==3"))
     ledlist.append(Led(23, "ELEC_BAT2_OFF_LED", MF_SR1, 30, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_1, "==1"))
@@ -398,7 +399,7 @@ def xplane_get_dataref_ids(xp):
             #print(f'name: {l.label}, id: {id}')
             if id in xp.led_dataref_ids:
                 continue
-            if l.dreftype.value >= DREF_TYPE.ARRAY_0.value:
+            if l.dreftype.value >= DREF_TYPE.ARRAY_0.value or l.dreftype == DREF_TYPE.DATA_MULTIPLE:
                 larray = []
                 for l2 in ledlist:
                     if l2.dataref == l.dataref:
@@ -423,6 +424,21 @@ def xplane_get_dataref_ids(xp):
     print("done")
 
 
+def eval_data(value, eval_string):
+    if not eval_string:
+        return value
+    if not "$" in eval_string:
+        s = 'int(value)' + eval_string
+        print(f"    eval: {s} - {value}")
+        value = eval(s)
+    if "$" in eval_string:
+        s = eval_string
+        s.replace("$", "value")
+        print(f"    eval: {s} - {value}")
+        value = eval(s)
+    return value
+
+
 def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
     #print(f"[A107] recevice: {data}")
     if data.get("type") != "dataref_update_values":
@@ -435,7 +451,7 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
         if ref_id in led_dataref_ids:
             ledobj = led_dataref_ids[ref_id]
 
-            if type(value) is list:
+            if type(value) is list: # dataref array, ledlist array
                 if type(ledobj) != list:
                     #print("")
                     print(f"[A107] ERROR: led array dataref not registered as list!")
@@ -445,29 +461,19 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                 for v in value:
                     for l2 in ledobj: # we received an array, send update to all objects
                         if idx == l2.dreftype.value - DREF_TYPE.ARRAY_0.value:
-                            value_new = value[idx]
-                            if l2.eval and not "$" in l2.eval:
-                                s = 'int(value_new)' + l2.eval
-                                print(f"    eval: {s}")
-                                value_new = eval(s)
-                            if l2.eval and "$" in l2.eval:
-                                s = l2.eval
-                                s.replace("$", "value_new")
-                                print(f"    eval: {s}")
-                                value_new = eval(s)
-                                #todo set datachache
+                            value_new = eval_data(value[idx], l2.eval)
+                            #todo set datachache
                             print(f"[A107]                       array value[{idx}] of {l2.label} = {value_new}")
                             rawsfire_a107_set_led(l2, value_new)
                     idx += 1
-            else:
-                if ledobj.eval and not "$" in ledobj.eval:
-                    s = 'value' + ledobj.eval
-                    value = eval(s)
-                if ledobj.eval and "$" in ledobj.eval:
-                    s = ledobj.eval
-                    s.replace("$", "value")
-                    print(f"    eval: {s}")
-                    value_new = eval(s)
+            elif type(ledobj) == list and type(value) != list: # multiple leds on same dataref (without dataref arry), for eval
+                for l in ledobj:
+                    value_new = eval_data(value, l.eval)
+                    print(f" found: {l.label} = {value}")
+                    #xp.datacache[ledobj.dataref] = value
+                    rawsfire_a107_set_led(l, value_new)
+            else: # single onject
+                value = eval_data(value, ledobj.eval)
                 print(f" found: {ledobj.label} = {value}")
                 xp.datacache[ledobj.dataref] = value
                 rawsfire_a107_set_led(ledobj, value)
@@ -518,7 +524,7 @@ def send_change_to_xp(name, channel, value):
 
             if b.dreftype == DREF_TYPE.CMD:
                 print(f"dref cmd {value} {b.type}")
-                if b.type == BUTTON.TOGGLE and value:
+                if b.type == BUTTON.TOGGLE:
                     print("send cmd")
                     xp.command_activate_duration(xp.buttonref_ids[b], 0.5)
                 if b.type == BUTTON.HOLD and value:
