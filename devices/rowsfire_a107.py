@@ -148,7 +148,9 @@ class BUTTON(Enum):
     SEND_4 = 7
     SEND_5 = 8
     HOLD   = 9
-    NONE = 10 # for testing
+    SEND_1_2 = 10 # 0 -> 1, 1 -> 2
+    SEND_2_1 = 11 # 0 -> 2, 1 -> 1
+    NONE = 99 # for testing
 
 
 class DREF_TYPE(Enum):
@@ -313,23 +315,23 @@ def create_led_list_a107():  # TODO check sim/cockpit/electrical/avionics_on == 
 
 def create_button_list_a107():
     create_led_list_a107()
-    buttonlist.append(Button(0, "APU_MASTER", MF_MP1, 4, "AirbusFBW/APUMaster", DREF_TYPE.DATA, BUTTON.TOGGLE))
+    buttonlist.append(Button(0, "APU_MASTER", MF_MP1, 4, "AirbusFBW/APUMaster", DREF_TYPE.DATA, BUTTON.SWITCH))
     buttonlist.append(Button(1, "APU_START", MF_MP1, 3, "AirbusFBW/APUStarter", DREF_TYPE.DATA, BUTTON.TOGGLE))
     buttonlist.append(Button(2, "APU_BLEED", MF_MP1, 6, "AirbusFBW/APUBleedSwitch", DREF_TYPE.DATA, BUTTON.TOGGLE))
-    buttonlist.append(Button(3, "Beacon Light", MF_MP3, 2, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE))
-    buttonlist.append(Button(4, "Wing Light", MF_MP3, 3, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_1, BUTTON.TOGGLE))
-    buttonlist.append(Button(5, "Nav Light ON", MF_MP3, 4, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
-    buttonlist.append(Button(6, "Nav Light AUTO", MF_MP3, 5, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
-    buttonlist.append(Button(7, "Land Left Light ON", MF_MP3, 7, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.TOGGLE))
-    buttonlist.append(Button(8, "Land Left Light OFF", MF_MP3, 8, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.TOGGLE))
-    buttonlist.append(Button(9, "Land Right Light ON", MF_MP3, 9, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.TOGGLE))
-    buttonlist.append(Button(10, "Land Right Light OFF", MF_MP3, 10, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.TOGGLE))
-    buttonlist.append(Button(11, "Nose Light OFF", MF_MP3, 12, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.TOGGLE))
-    buttonlist.append(Button(12, "Nose Light TO", MF_MP3, 11, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.TOGGLE))
-    buttonlist.append(Button(13, "RWY Turn Light", MF_MP3, 6, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_6, BUTTON.TOGGLE))
-    buttonlist.append(Button(14, "Strobe Light ON", MF_MP3, 0, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.TOGGLE))
-    buttonlist.append(Button(15, "Strobe Light AUTO", MF_MP3, 1, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.TOGGLE))
-    buttonlist.append(Button(16, "Seatbelt", MF_MP3, 13, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_11, BUTTON.TOGGLE))
+    buttonlist.append(Button(3, "Beacon Light", MF_MP3, 2, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE_INVERSE))
+    buttonlist.append(Button(4, "Wing Light", MF_MP3, 3, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_1, BUTTON.TOGGLE_INVERSE))
+    buttonlist.append(Button(5, "Nav Light 2", MF_MP3, 5, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.SEND_2_1))
+    buttonlist.append(Button(6, "Nav Light OFF", MF_MP3, 4, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
+    buttonlist.append(Button(7, "Land Left Light ON", MF_MP3, 8, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.SEND_2_1))
+    buttonlist.append(Button(8, "Land Left Light RETRACT", MF_MP3, 7, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.TOGGLE))
+    buttonlist.append(Button(9, "Land Right Light ON", MF_MP3, 10, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.SEND_2_1))
+    buttonlist.append(Button(10, "Land Right Light RETRACT", MF_MP3, 9, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.TOGGLE))
+    buttonlist.append(Button(11, "Nose Light OFF", MF_MP3, 11, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.TOGGLE))
+    buttonlist.append(Button(12, "Nose Light TO", MF_MP3, 12, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.SEND_2_1))
+    buttonlist.append(Button(13, "RWY Turn Light", MF_MP3, 6, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_6, BUTTON.TOGGLE_INVERSE))
+    buttonlist.append(Button(14, "Strobe Light ON", MF_MP3, 1, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.SEND_2_1))
+    buttonlist.append(Button(15, "Strobe Light AUTO", MF_MP3, 0, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.TOGGLE))
+    buttonlist.append(Button(16, "Seatbelt", MF_MP3, 13, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_11, BUTTON.TOGGLE_INVERSE))
     buttonlist.append(Button(17, "Ice Eng1", MF_MP1, 1, "toliss_airbus/antiicecommands/ENG1Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(18, "Ice Eng2", MF_MP1, 0, "toliss_airbus/antiicecommands/ENG2Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(19, "Ice Wing", MF_MP1, 2, "toliss_airbus/antiicecommands/WingToggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
@@ -365,7 +367,7 @@ def create_button_list_a107():
     buttonlist.append(Button(48, "Right Pump2", MF_MP2, 6, "AirbusFBW/FuelOHPArray", DREF_TYPE.ARRAY_5, BUTTON.TOGGLE))
     buttonlist.append(Button(50, "Bat1", MF_MP2, 15, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE))
     buttonlist.append(Button(51, "Bat2", MF_MP2, 14, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_11, BUTTON.TOGGLE)) # toto bats volt read AirbusFBW/BatVolts
-    buttonlist.append(Button(52, "APU Gen", MF_MP1, 8, "AirbusFBW/APUGenOHPArray", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE))
+    #buttonlist.append(Button(52, "APU Gen", MF_MP1, 8, "AirbusFBW/APUGenOHPArray", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE)) # gen array is read only
     buttonlist.append(Button(53, "IR1", MF_MP1, 13, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
     buttonlist.append(Button(54, "IR2", MF_MP1, 12, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
     buttonlist.append(Button(55, "IR3", MF_MP1, 11, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
@@ -487,6 +489,12 @@ def send_change_to_xp(name, channel, value):
                 break
             if b.type == BUTTON.TOGGLE_INVERSE:
                 value = not value
+            if b.type == BUTTON.SEND_1_2:
+                value = value + 1
+            if b.type == BUTTON.SEND_2_1:
+                if value == 0:
+                    value = 2
+
             if not xplane_connected:
                 print(f"not connected to x-plane")
                 break
