@@ -444,17 +444,28 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                     for l2 in ledobj: # we received an array, send update to all objects
                         if idx == l2.dreftype.value - DREF_TYPE.ARRAY_0.value:
                             value_new = value[idx]
-                            if l2.eval:
-                                s = 'value_new' + l2.eval
+                            if l2.eval and not "$" in l2.eval:
+                                s = 'int(value_new)' + l2.eval
+                                print(f"    eval: {s}")
+                                value_new = eval(s)
+                            if l2.eval and "$" in l2.eval:
+                                s = l2.eval
+                                s.replace("$", "value_new")
+                                print(f"    eval: {s}")
                                 value_new = eval(s)
                                 #todo set datachache
                             print(f"[A107]                       array value[{idx}] of {l2.label} = {value_new}")
                             rawsfire_a107_set_led(l2, value_new)
                     idx += 1
             else:
-                if ledobj.eval != None:
+                if ledobj.eval and not "$" in ledobj.eval:
                     s = 'value' + ledobj.eval
                     value = eval(s)
+                if ledobj.eval and "$" in ledobj.eval:
+                    s = ledobj.eval
+                    s.replace("$", "value")
+                    print(f"    eval: {s}")
+                    value_new = eval(s)
                 print(f" found: {ledobj.label} = {value}")
                 xp.datacache[ledobj.dataref] = value
                 rawsfire_a107_set_led(ledobj, value)
