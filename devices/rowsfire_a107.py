@@ -267,7 +267,7 @@ def create_led_list_a107():  # TODO check sim/cockpit/electrical/avionics_on == 
     ledlist.append(Led(7, "AIR_PACK1_BLEED_OFF_LED", MF_SR2, 5, "AirbusFBW/Pack1Switch", DREF_TYPE.DATA, "==0"))
     ledlist.append(Led(8, "AIR_PACK1_BLEED_FAULT_LED", MF_SR2, 4, "AirbusFBW/OHPLightsATA21_Raw", DREF_TYPE.ARRAY_7, "&2"))
     ledlist.append(Led(9, "AIR_PACK2_BLEED_OFF_LED", MF_SR2, 9, "AirbusFBW/Pack2Switch", DREF_TYPE.DATA, "==0"))
-    ledlist.append(Led(10, "AIR_PACK2_BLEED_FAULT_LED", MF_SR2, "AirbusFBW/OHPLightsATA21_Raw", DREF_TYPE.ARRAY_9, "&2"))
+    ledlist.append(Led(10, "AIR_PACK2_BLEED_FAULT_LED", MF_SR2, 0, "AirbusFBW/OHPLightsATA21_Raw", DREF_TYPE.ARRAY_9, "&2"))
     ledlist.append(Led(11, "ADIRS_ON_BAT_LED", MF_SR1, 1, "AirbusFBW/ADIRUOnBat"))
     ledlist.append(Led(12, "GPWS_FLAP3_ON_LED", MF_SR1, 5, "AirbusFBW/GPWSSwitchArray", DREF_TYPE.ARRAY_3))
     ledlist.append(Led(13, "RCDR_GND_CTL_ON_LED", MF_SR1, 6, "AirbusFBW/CvrGndCtrl"))
