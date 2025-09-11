@@ -317,8 +317,8 @@ def create_button_list_a107():
     buttonlist.append(Button(2, "APU_BLEED", MF_MP1, 6, "AirbusFBW/APUBleedSwitch", DREF_TYPE.DATA, BUTTON.TOGGLE))
     buttonlist.append(Button(3, "Beacon Light", MF_MP3, 2, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE))
     buttonlist.append(Button(4, "Wing Light", MF_MP3, 3, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_1, BUTTON.TOGGLE))
-    buttonlist.append(Button(5, "Nav Light ON", MF_MP1, 4, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
-    buttonlist.append(Button(6, "Nav Light AUTO", MF_MP1, 5, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
+    buttonlist.append(Button(5, "Nav Light ON", MF_MP3, 4, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
+    buttonlist.append(Button(6, "Nav Light AUTO", MF_MP3, 5, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
     buttonlist.append(Button(7, "Land Left Light ON", MF_MP3, 7, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.TOGGLE))
     buttonlist.append(Button(8, "Land Left Light OFF", MF_MP3, 8, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.TOGGLE))
     buttonlist.append(Button(9, "Land Right Light ON", MF_MP3, 9, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.TOGGLE))
@@ -329,7 +329,7 @@ def create_button_list_a107():
     buttonlist.append(Button(14, "Strobe Light ON", MF_MP3, 0, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.TOGGLE))
     buttonlist.append(Button(15, "Strobe Light AUTO", MF_MP3, 1, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.TOGGLE))
     buttonlist.append(Button(16, "Seatbelt", MF_MP3, 13, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_11, BUTTON.TOGGLE))
-    buttonlist.append(Button(17, "Ice Eng1", MF_MP1, 4, "toliss_airbus/antiicecommands/ENG1Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
+    buttonlist.append(Button(17, "Ice Eng1", MF_MP1, 1, "toliss_airbus/antiicecommands/ENG1Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(18, "Ice Eng2", MF_MP1, 0, "toliss_airbus/antiicecommands/ENG2Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(19, "Ice Wing", MF_MP1, 2, "toliss_airbus/antiicecommands/WingToggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(20, "Pack1", MF_MP1, 7, "toliss_airbus/aircondcommands/Pack1Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
@@ -371,8 +371,8 @@ def create_button_list_a107():
     buttonlist.append(Button(56, "ExtPwr", MF_MP2, 13, "toliss_airbus/eleccommands/ExtPowToggle", DREF_TYPE.CMD, BUTTON.TOGGLE)) # toto 1 .. on, 2 .. off
     buttonlist.append(Button(57, "TCAS TA", MF_MP4, 13, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
     buttonlist.append(Button(58, "TCAS TA/TR", MF_MP4, 12, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
-    buttonlist.append(Button(59, "Exit ON", MF_MP1, 5, "toliss_airbus/lightcommands/EmerExitLightUp", DREF_TYPE.CMD, BUTTON.TOGGLE))
-    buttonlist.append(Button(60, "Exit OFF", MF_MP1, 4, "toliss_airbus/lightcommands/EmerExitLightDown", DREF_TYPE.CMD, BUTTON.TOGGLE))
+    buttonlist.append(Button(59, "Exit ON", MF_MP4, 5, "toliss_airbus/lightcommands/EmerExitLightUp", DREF_TYPE.CMD, BUTTON.TOGGLE))
+    buttonlist.append(Button(60, "Exit OFF", MF_MP4, 4, "toliss_airbus/lightcommands/EmerExitLightDown", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(61, "Wiper OFF", MF_MP4, 14, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SEND_0))
     buttonlist.append(Button(62, "Wiper Fast", MF_MP4, 15, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SEND_2))
     #buttonlist.append(Button(64, "Wiper Slow", MF_MP4, 14, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SEND1)) # missing in config
@@ -499,7 +499,7 @@ def mf_value_changed(cmd, name, arg):
         send_change_to_xp(MF_MP1, 4, int(arg[0])) # fale APU Master
     elif cmd == mf.MF.CMD.DIGINMUX_CHANGE:
         print(f"Value changed (DigInMux): {name}, {arg[0]}, {int(arg[1])}") # channel, value
-        send_change_to_xp(name, arg[0], int(arg[1]))
+        send_change_to_xp(name, int(arg[0]), int(arg[1]))
     elif cmd == mf.MF.CMD.ANALOG_CHANGE:
         print(f"Value changed (Analog): {name}, {int(arg[0])}") # value
 
