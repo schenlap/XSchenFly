@@ -64,7 +64,7 @@ class XP_Websocket:
         set_msg = {
             "data": int(value)
         }
-        if index:
+        if index != None:
             xpdr_code_response = self.xp.patch(self.rest_url + "/datarefs/" + str(id) + "/value", data=json.dumps(set_msg), params={"index":index})
         else:
             xpdr_code_response = self.xp.patch(self.rest_url + "/datarefs/" + str(id) + "/value", data=json.dumps(set_msg))   
@@ -411,7 +411,7 @@ def xplane_get_dataref_ids(xp):
             continue
         if b.dreftype == DREF_TYPE.CMD:
             id = xp.command_id_fetch(b.dataref)
-        elif b.dreftype == DREF_TYPE.DATA:
+        elif b.dreftype == DREF_TYPE.DATA or b.dreftype.value >= DREF_TYPE.ARRAY_0.value:
             id = xp.dataref_id_fetch(b.dataref)
             xp.datacache[b.dataref] = 0
         #print(f'name: {l.label}, id: {id}')
@@ -481,6 +481,11 @@ def send_change_to_xp(name, channel, value):
                     xp.dataref_set_value(xp.buttonref_ids[b], value)
                     break
 
+            if b.dreftype.value >= DREF_TYPE.ARRAY_0.value:
+                index = b.dreftype.value - DREF_TYPE.ARRAY_0.value
+                #print(f"sending array {b.dreftype} [{index}] = {value}")
+                xp.dataref_set_value(xp.buttonref_ids[b], value, index)
+
             if b.dreftype == DREF_TYPE.CMD:
                 print(f"dref cmd {value} {b.type}")
                 if b.type == BUTTON.TOGGLE and value:
@@ -490,6 +495,8 @@ def send_change_to_xp(name, channel, value):
                     print("send cmd")
                     xp.command_activate_duration(xp.buttonref_ids[b], 4)
             break
+    if not found:
+        print(f"[A107] {name}, {channel} not found")
 
 
 def mf_value_changed(cmd, name, arg):
