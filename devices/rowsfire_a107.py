@@ -344,8 +344,8 @@ def create_button_list_a107():
     buttonlist.append(Button(26, "Fire Test Eng1", MF_MP2, 5, "AirbusFBW/FireTestENG1", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(27, "Fire Test Eng2", MF_MP2, 3, "AirbusFBW/FireTestENG2", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(28, "Adirs ON Bat", MF_MP1, 14, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
-    buttonlist.append(Button(29, "Smoking Light AUTO", MF_MP4, 3, "ckpt/oh/nosmoking/anim", DREF_TYPE.DATA, BUTTON.SEND_1))
-    buttonlist.append(Button(30, "Smoking Light OFF", MF_MP3, 14, "ckpt/oh/nosmoking/anim", DREF_TYPE.DATA, BUTTON.SEND_0)) # todo send ON = 2
+    buttonlist.append(Button(29, "Smoking Light ON", MF_MP4, 3, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_12, BUTTON.SEND_2_1))
+    buttonlist.append(Button(30, "Smoking Light OFF", MF_MP3, 14, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_12, BUTTON.TOGGLE)) # todo send ON = 2
     buttonlist.append(Button(31, "Calls", MF_MP2, 2, "AirbusFBW/purser/fwd", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(32, "Adirs 1-1", MF_MP4, 7, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SEND_0))
     buttonlist.append(Button(33, "Adirs 1-2", MF_MP4, 11, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SEND_1))
@@ -374,11 +374,10 @@ def create_button_list_a107():
     buttonlist.append(Button(56, "ExtPwr", MF_MP2, 13, "toliss_airbus/eleccommands/ExtPowToggle", DREF_TYPE.CMD, BUTTON.TOGGLE)) # toto 1 .. on, 2 .. off
     buttonlist.append(Button(57, "TCAS TA", MF_MP4, 13, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
     buttonlist.append(Button(58, "TCAS TA/TR", MF_MP4, 12, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
-    buttonlist.append(Button(59, "Exit ON", MF_MP4, 5, "toliss_airbus/lightcommands/EmerExitLightUp", DREF_TYPE.CMD, BUTTON.TOGGLE))
-    buttonlist.append(Button(60, "Exit OFF", MF_MP4, 4, "toliss_airbus/lightcommands/EmerExitLightDown", DREF_TYPE.CMD, BUTTON.TOGGLE))
-    buttonlist.append(Button(61, "Wiper OFF", MF_MP4, 14, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SEND_0))
-    buttonlist.append(Button(62, "Wiper Fast", MF_MP4, 15, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SEND_2))
-    #buttonlist.append(Button(64, "Wiper Slow", MF_MP4, 14, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SEND1)) # missing in config
+    buttonlist.append(Button(59, "Exit ON", MF_MP4, 5, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_10, BUTTON.SEND_2_1))
+    buttonlist.append(Button(60, "Exit OFF", MF_MP4, 4, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_10, BUTTON.TOGGLE))
+    buttonlist.append(Button(61, "Wiper OFF", MF_MP4, 15, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SWITCH))
+    buttonlist.append(Button(62, "Wiper Fast", MF_MP4, 14, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SEND_2_1))
     buttonlist.append(Button(63, "Flap 3", MF_MP1, 15, "toliss_airbus/gpwscommands/Flap3Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
  
 
@@ -507,7 +506,7 @@ def send_change_to_xp(name, channel, value):
                     xp.dataref_set_value(xp.buttonref_ids[b], val)
                     break
 
-                if b.type == BUTTON.HOLD or b.type == BUTTON.SWITCH:
+                if b.type == BUTTON.HOLD or b.type == BUTTON.SWITCH or b.type == BUTTON.SEND_2_1 or b.type == BUTTON.TOGGLE_INVERSE:
                     xp.datacache[b.dataref] = value
                     xp.dataref_set_value(xp.buttonref_ids[b], value)
                     break
