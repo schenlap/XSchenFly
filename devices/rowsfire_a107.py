@@ -140,13 +140,14 @@ class DEVICEMASK(IntEnum):
 class BUTTON(Enum):
     SWITCH = 0
     TOGGLE = 1
-    SEND_0 = 2
-    SEND_1 = 3
-    SEND_2 = 4
-    SEND_3 = 5
-    SEND_4 = 6
-    SEND_5 = 7
-    HOLD   = 8
+    TOGGLE_INVERSE = 2
+    SEND_0 = 3
+    SEND_1 = 4
+    SEND_2 = 5
+    SEND_3 = 6
+    SEND_4 = 7
+    SEND_5 = 8
+    HOLD   = 9
     NONE = 10 # for testing
 
 
@@ -475,15 +476,26 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
 
 def send_change_to_xp(name, channel, value):
     global xp
+    print(f"[A107] search for: {name}, {channel}")
+
+    found = False
     for b in buttonlist:
         if name == b.mf_button and channel == b.mf_pin:
+            print(f"found {b}")
+            found = True
             if b.type == BUTTON.NONE:
+                break
+            if b.type == BUTTON.TOGGLE_INVERSE:
+                value = not value
+            if not xplane_connected:
+                print(f"not connected to x-plane")
                 break
 
             if b.dreftype == DREF_TYPE.DATA:
                 # TODO arrays in datacache
                 if b.type == BUTTON.TOGGLE and value == 0:
                     val = int(not xp.datacache[b.dataref])
+                    print(f"set dataref to {val}")
                     xp.dataref_set_value(xp.buttonref_ids[b], val)
                     break
 
