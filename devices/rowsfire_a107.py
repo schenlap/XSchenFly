@@ -429,12 +429,12 @@ def eval_data(value, eval_string):
         return value
     if not "$" in eval_string:
         s = 'int(value)' + eval_string
-        print(f"    eval: {s} - {value}")
+        #print(f"    eval: {s} - {value}")
         value = eval(s)
     if "$" in eval_string:
         s = eval_string
         s = s.replace("$", "value")
-        print(f"    eval: {s} - {value}")
+        #print(f"    eval: {s} - {value}")
         value = eval(s)
     return value
 
@@ -447,16 +447,14 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
 
     for ref_id_str, value in data["data"].items():
         ref_id = int(ref_id_str)
-        print(f"[A107] searching for {ref_id}...", end='')
+        #print(f"[A107] searching for {ref_id}...", end='')
         if ref_id in led_dataref_ids:
             ledobj = led_dataref_ids[ref_id]
 
             if type(value) is list: # dataref array, ledlist array
                 if type(ledobj) != list:
-                    #print("")
                     print(f"[A107] ERROR: led array dataref not registered as list!")
                     exit()
-                #print(f"") # end line
                 idx = 0
                 for v in value:
                     for l2 in ledobj: # we received an array, send update to all objects
@@ -469,7 +467,7 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
             elif type(ledobj) == list and type(value) != list: # multiple leds on same dataref (without dataref arry), for eval
                 for l in ledobj:
                     value_new = eval_data(value, l.eval)
-                    print(f" found: {l.label} = {value}")
+                    #print(f" found: {l.label} = {value}")
                     #xp.datacache[ledobj.dataref] = value
                     rawsfire_a107_set_led(l, value_new)
             else: # single onject
@@ -478,7 +476,7 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                 xp.datacache[ledobj.dataref] = value
                 rawsfire_a107_set_led(ledobj, value)
         else:
-            print(f" not found")
+            print(f"[A107] {ref_id} not found")
 
 
 def send_change_to_xp(name, channel, value):
