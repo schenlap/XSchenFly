@@ -64,6 +64,19 @@ For Discussions use https://forums.x-plane.org/forums/topic/324813-winwing-mcdu-
 7. let hid find hidapi: `ln -s /opt/homebrew/lib/libhidapi.dylib .`
 8. start script with: `python3 ./XSchenFly.py` when X-Plane with Toliss aircraft is loaded.
 
+### Configuration of rowsfire devices (mobiflight)
+1. on first start you will see something like:
+```
+   find mobiflight devices:
+   /dev/ttyUSB0: None 6790:29987
+testing /dev/ttyUSB0 - USB Serial
+   received serial number: SN-08B-DB1
+   Not using mobiflight device SN-08B-DB1, expected SN-XXX-XXX
+ [A107] No compatible rawsfire device found, quit
+```
+because it does not know which serial number it should use.
+
+2. Change `MOBIFLIGHT_SERIAL = "SN-XXX-XXX"` in devices/rawsfire_a107.py to `MOBIFLIGHT_SERIAL = "SN-08B-DB1"` (use your serial that was printed under `Not using mobiflight device SN-08B-DB1`)
 
 ## Use
 1. start X-Plane
