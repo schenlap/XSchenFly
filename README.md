@@ -14,7 +14,7 @@ Supported Hardware:
  * Rowsfire A107: work in progress
    * BAT1&2 volatege is missing
    * BAT1&2 button - I did not find the correct dataref yet
-   * APU GEN button - I did not find the correct dataref of yet
+   * APU GEN button - I did not find the correct dataref yet
    * APU Fire indication - I did not find the correct dataref yet
    * APU Bleed Fault indication - I did not find the correct dataref yet
    * IR1-3 switches: ATT can not be selected
