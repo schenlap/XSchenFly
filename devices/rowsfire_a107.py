@@ -150,6 +150,8 @@ class BUTTON(Enum):
     HOLD   = 9
     SEND_1_2 = 10 # 0 -> 1, 1 -> 2
     SEND_2_1 = 11 # 0 -> 2, 1 -> 1
+    SWITCH_INVERSE = 15
+    SWITCH_COMBINED = 16
     NONE = 99 # for testing
 
 
@@ -188,6 +190,21 @@ class Button:
     def __str__(self):
             return(f"{self.label} -> {self.dataref} {self.type}")
 
+
+class Combined:
+    def __init__(self, nr, label, button_names, truth_table):
+        self.id = nr
+        self.label = label
+        self.button_names = button_names
+        self.truth_table = truth_table
+        self.dataref = None
+        self.buttons = [None, None]
+
+
+    def __str__(self):
+            return(f"{self.label} -> {self.dataref} {self.truth_table}")
+
+
 class Led:
     def __init__(self, nr, label, mf_name, mf_pin, dataref, dreftype = DREF_TYPE.NONE, eval = None):
         self.id = nr
@@ -200,6 +217,7 @@ class Led:
 
 xplane_connected = False
 buttonlist = []
+combinedlist = [] # combined buttons
 ledlist = []
 
 device_config = DEVICEMASK.NONE
@@ -331,21 +349,21 @@ def create_button_list_a107():
     buttonlist.append(Button(2, "APU_BLEED", MF_MP1, 6, "AirbusFBW/APUBleedSwitch", DREF_TYPE.DATA, BUTTON.SWITCH))
     buttonlist.append(Button(3, "Beacon Light", MF_MP3, 2, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE_INVERSE))
     buttonlist.append(Button(4, "Wing Light", MF_MP3, 3, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_1, BUTTON.TOGGLE_INVERSE))
-    buttonlist.append(Button(5, "Nav Light 2", MF_MP3, 5, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.SEND_2_1))
-    buttonlist.append(Button(6, "Nav Light OFF", MF_MP3, 4, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
-    buttonlist.append(Button(7, "Land Left Light ON", MF_MP3, 8, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.SEND_2_1))
-    buttonlist.append(Button(8, "Land Left Light RETRACT", MF_MP3, 7, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.TOGGLE))
-    buttonlist.append(Button(9, "Land Right Light ON", MF_MP3, 10, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.SEND_2_1))
-    buttonlist.append(Button(10, "Land Right Light RETRACT", MF_MP3, 9, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.TOGGLE))
-    buttonlist.append(Button(11, "Nose Light OFF", MF_MP3, 11, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.TOGGLE))
-    buttonlist.append(Button(12, "Nose Light TO", MF_MP3, 12, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.SEND_2_1))
+    buttonlist.append(Button(5, "Nav Light 1", MF_MP3, 5, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(6, "Nav Light 2", MF_MP3, 4, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_2, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(7, "Land Left 1", MF_MP3, 8, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(8, "Land Left 2", MF_MP3, 7, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_4, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(9, "Land Right 1", MF_MP3, 10, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(10, "Land Right 2", MF_MP3, 9, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_5, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(11, "Nose Light 1", MF_MP3, 11, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(12, "Nose Light 2", MF_MP3, 12, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_3, BUTTON.SWITCH_COMBINED))
     buttonlist.append(Button(13, "RWY Turn Light", MF_MP3, 6, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_6, BUTTON.TOGGLE_INVERSE))
-    buttonlist.append(Button(14, "Strobe Light ON", MF_MP3, 1, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.SEND_2_1))
-    buttonlist.append(Button(15, "Strobe Light AUTO", MF_MP3, 0, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.TOGGLE))
+    buttonlist.append(Button(14, "Strobe 1", MF_MP3, 1, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(15, "Strobe 2", MF_MP3, 0, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_7, BUTTON.SWITCH_COMBINED))
     buttonlist.append(Button(16, "Seatbelt", MF_MP3, 13, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_11, BUTTON.TOGGLE_INVERSE))
-    buttonlist.append(Button(17, "Ice Eng1", MF_MP1, 1, "toliss_airbus/antiicecommands/ENG1Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
-    buttonlist.append(Button(18, "Ice Eng2", MF_MP1, 0, "toliss_airbus/antiicecommands/ENG2Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
-    buttonlist.append(Button(19, "Ice Wing", MF_MP1, 2, "toliss_airbus/antiicecommands/WingToggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
+    buttonlist.append(Button(17, "Ice Eng1", MF_MP1, 1, "toliss_airbus/antiicecommands/ENG1Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE_INVERSE))
+    buttonlist.append(Button(18, "Ice Eng2", MF_MP1, 0, "toliss_airbus/antiicecommands/ENG2Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE_INVERSE))
+    buttonlist.append(Button(19, "Ice Wing", MF_MP1, 2, "toliss_airbus/antiicecommands/WingToggle", DREF_TYPE.CMD, BUTTON.TOGGLE_INVERSE))
     buttonlist.append(Button(20, "Pack1", MF_MP1, 7, "toliss_airbus/aircondcommands/Pack1Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(21, "Pack2", MF_MP1, 5, "toliss_airbus/aircondcommands/Pack2Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(22, "Fire APU", MF_MP2, 0, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
@@ -355,20 +373,20 @@ def create_button_list_a107():
     buttonlist.append(Button(26, "Fire Test Eng1", MF_MP2, 5, "AirbusFBW/FireTestENG1", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(27, "Fire Test Eng2", MF_MP2, 3, "AirbusFBW/FireTestENG2", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button(28, "Adirs ON Bat", MF_MP1, 14, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
-    buttonlist.append(Button(29, "Smoking Light ON", MF_MP4, 3, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_12, BUTTON.SEND_2_1))
-    buttonlist.append(Button(30, "Smoking Light OFF", MF_MP3, 14, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_12, BUTTON.TOGGLE)) # todo send ON = 2
+    buttonlist.append(Button(29, "Smoking Light 1", MF_MP4, 3, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_12, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(30, "Smoking Light 2", MF_MP3, 14, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_12, BUTTON.SWITCH_COMBINED))
     buttonlist.append(Button(31, "Calls", MF_MP2, 2, "AirbusFBW/purser/fwd", DREF_TYPE.CMD, BUTTON.HOLD))
-    buttonlist.append(Button(32, "Adirs 1-1", MF_MP4, 6, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SEND_0))
-    buttonlist.append(Button(33, "Adirs 1-2", MF_MP4, 7, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SEND_1))
+    buttonlist.append(Button(32, "Adirs 1-1", MF_MP4, 6, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(33, "Adirs 1-2", MF_MP4, 7, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH_COMBINED))
     #buttonlist.append(Button(34, "Adirs 1-3", MF_MP4, 9, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SEND_2))
-    buttonlist.append(Button(35, "Adirs 2-1", MF_MP4, 10, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SEND_0))
-    buttonlist.append(Button(36, "Adirs 2-2", MF_MP4, 11, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SEND_1))
+    buttonlist.append(Button(35, "Adirs 2-1", MF_MP4, 10, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(36, "Adirs 2-2", MF_MP4, 11, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SWITCH_COMBINED))
     #buttonlist.append(Button(37, "Adirs 2-3", MF_MP4, 8, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SEND_2))
-    buttonlist.append(Button(38, "Adirs 3-1", MF_MP4, 8, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_2, BUTTON.SEND_0))
-    buttonlist.append(Button(39, "Adirs 3-2", MF_MP4, 9, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_2, BUTTON.SEND_1))
+    buttonlist.append(Button(38, "Adirs 3-1", MF_MP4, 8, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_2, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(39, "Adirs 3-2", MF_MP4, 9, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_2, BUTTON.SWITCH_COMBINED))
     #buttonlist.append(Button(40, "Adirs 3-3", MF_MP4, 9, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_2, BUTTON.SEND_2))
-    buttonlist.append(Button(41, "Gnd ctrl", MF_MP1, 10, "AirbusFBW/CvrGndCtrl", DREF_TYPE.DATA, BUTTON.SWITCH))
-    buttonlist.append(Button(42, "Crewsupply", MF_MP1, 9, "AirbusFBW/CrewOxySwitch", DREF_TYPE.DATA, BUTTON.TOGGLE_INVERSE))
+    buttonlist.append(Button(41, "Gnd ctrl", MF_MP1, 10, "AirbusFBW/CvrGndCtrl", DREF_TYPE.DATA, BUTTON.SWITCH_INVERSE))
+    buttonlist.append(Button(42, "Crewsupply", MF_MP1, 9, "AirbusFBW/CrewOxySwitch", DREF_TYPE.DATA, BUTTON.SWITCH))
     buttonlist.append(Button(43, "Pump1", MF_MP2, 10, "AirbusFBW/FuelOHPArray", DREF_TYPE.ARRAY_2, BUTTON.TOGGLE))
     buttonlist.append(Button(44, "Pump2", MF_MP2, 8, "AirbusFBW/FuelOHPArray", DREF_TYPE.ARRAY_3, BUTTON.TOGGLE))
     buttonlist.append(Button(45, "Left Pump1", MF_MP2, 12, "AirbusFBW/FuelOHPArray", DREF_TYPE.ARRAY_0, BUTTON.TOGGLE))
@@ -382,15 +400,41 @@ def create_button_list_a107():
     buttonlist.append(Button(53, "IR1", MF_MP1, 13, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
     buttonlist.append(Button(54, "IR2", MF_MP1, 12, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
     buttonlist.append(Button(55, "IR3", MF_MP1, 11, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
-    buttonlist.append(Button(56, "ExtPwr", MF_MP2, 13, "toliss_airbus/eleccommands/ExtPowToggle", DREF_TYPE.CMD, BUTTON.TOGGLE)) # toto 1 .. on, 2 .. off
-    buttonlist.append(Button(57, "TCAS TA", MF_MP4, 13, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
-    buttonlist.append(Button(58, "TCAS TA/TR", MF_MP4, 12, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
-    buttonlist.append(Button(59, "Exit ON", MF_MP4, 5, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_10, BUTTON.SEND_2_1))
-    buttonlist.append(Button(60, "Exit OFF", MF_MP4, 4, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_10, BUTTON.TOGGLE))
-    buttonlist.append(Button(61, "Wiper OFF", MF_MP4, 15, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SWITCH))
-    buttonlist.append(Button(62, "Wiper Fast", MF_MP4, 14, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SEND_2_1))
-    buttonlist.append(Button(63, "Flap 3", MF_MP1, 15, "toliss_airbus/gpwscommands/Flap3Toggle", DREF_TYPE.CMD, BUTTON.TOGGLE))
+    buttonlist.append(Button(56, "ExtPwrON", MF_MP2, 13, "toliss_airbus/eleccommands/ExtPowOn", DREF_TYPE.CMD, BUTTON.SWITCH))
+    buttonlist.append(Button(56, "ExtPwrOFF", MF_MP2, 13, "toliss_airbus/eleccommands/ExtPowOff", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
+    #buttonlist.append(Button(57, "TCAS 1", MF_MP4, 13, None, DREF_TYPE.ARRAY_12, BUTTON.SWITCH_COMBINED))
+    #buttonlist.append(Button(58, "TCAS 2", MF_MP4, 12, None, DREF_TYPE.ARRAY_12, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(59, "Exit 1", MF_MP4, 5, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_10, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(60, "Exit 2", MF_MP4, 4, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_10, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(61, "Wiper 1", MF_MP4, 15, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(62, "Wiper 2", MF_MP4, 14, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SWITCH_COMBINED))
+    buttonlist.append(Button(63, "Flap 3 Off", MF_MP1, 15, "toliss_airbus/gpwscommands/Flap3Off", DREF_TYPE.CMD, BUTTON.SWITCH))
+    buttonlist.append(Button(64, "Flap 3 On", MF_MP1, 15, "toliss_airbus/gpwscommands/Flap3On", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
  
+
+def create_combined_button_list_a107():
+    combinedlist.append(Combined(0, "Wiper_combined", ["Wiper 1", "Wiper 2"], [None, 2, 0, 1]))
+    combinedlist.append(Combined(1, "Exit_combined", ["Exit 1", "Exit 2"], [None, 0, 2, 1]))
+    #combinedlist.append(Combined(2, "TCAS_combined", ["TCAS 1", "TCAS 2"], [0, 1, 2, 3]))
+    combinedlist.append(Combined(3, "Adirs 1_combined", ["Adirs 1-1", "Adirs 1-2"], [None, 2, 0, 1]))
+    combinedlist.append(Combined(4, "Adirs 2_combined", ["Adirs 2-1", "Adirs 2-2"], [None, 2, 0, 1]))
+    combinedlist.append(Combined(5, "Adirs 3_combined", ["Adirs 3-1", "Adirs 3-2"], [None, 2, 0, 1]))
+    combinedlist.append(Combined(5, "Land Left_combined", ["Land Left 1", "Land Left 2"], [None, 0, 2, 1]))
+    combinedlist.append(Combined(5, "Land Right_combined", ["Land Right 1", "Land Right 2"], [None, 0, 2, 1]))
+    combinedlist.append(Combined(5, "Nav Light_combined", ["Nav Light 1", "Nav Light 2"], [None, 0, 2, 1]))
+    combinedlist.append(Combined(5, "Strobe_combined", ["Strobe 1", "Strobe 2"], [None, 0, 2, 1]))
+    combinedlist.append(Combined(5, "Nose Light_combined", ["Nose Light 1", "Nose Light 2"], [None, 2, 0, 1]))
+    combinedlist.append(Combined(5, "Smoking Light_combined", ["Smoking Light 1", "Smoking Light 2"], [None, 0, 2, 1]))
+    for c in combinedlist:
+        for b in buttonlist:
+            if c.button_names[0] == b.label:
+                c.buttons[0] = b
+                c.dataref = b.dataref
+                xp.datacache[b.dataref + '_' + b.label] = None
+            if c.button_names[1] == b.label:
+                c.buttons[1] = b
+                xp.datacache[b.dataref + '_' + b.label] = None
+
 
 def startupscreen(device, device_config, version, new_version):
     for l in ledlist:
@@ -517,7 +561,7 @@ def send_change_to_xp(name, channel, value):
             found = True
             if b.type == BUTTON.NONE or b.dataref == None:
                 break
-            if b.type == BUTTON.TOGGLE_INVERSE:
+            if b.type == BUTTON.TOGGLE_INVERSE or b.type == BUTTON.SWITCH_INVERSE:
                 value = not value
             if b.type == BUTTON.SEND_1_2:
                 value = value + 1
@@ -537,15 +581,24 @@ def send_change_to_xp(name, channel, value):
                     xp.dataref_set_value(xp.buttonref_ids[b], val)
                     break
 
-                if b.type == BUTTON.HOLD or b.type == BUTTON.SWITCH or b.type == BUTTON.SEND_2_1 or b.type == BUTTON.TOGGLE_INVERSE:
+                if b.type == BUTTON.HOLD or b.type == BUTTON.SWITCH or b.type == BUTTON.SWITCH_INVERSE or b.type == BUTTON.SEND_2_1 or b.type == BUTTON.TOGGLE_INVERSE:
                     xp.datacache[b.dataref] = value
                     xp.dataref_set_value(xp.buttonref_ids[b], value)
                     break
 
+                if b.type == BUTTON.SWITCH_COMBINED:
+                    xp.datacache[b.dataref + '_' + b.label] = value
+                    process_combined_button(b)
+
             if b.dreftype.value >= DREF_TYPE.ARRAY_0.value:
                 index = b.dreftype.value - DREF_TYPE.ARRAY_0.value
-                #print(f"sending array {b.dreftype} [{index}] = {value}")
-                xp.dataref_set_value(xp.buttonref_ids[b], value, index)
+
+                if b.type == BUTTON.SWITCH_COMBINED:
+                    xp.datacache[b.dataref + '_' + b.label] = value
+                    process_combined_button(b, index)
+                else:
+                    #print(f"sending array {b.dreftype} [{index}] = {value}")
+                    xp.dataref_set_value(xp.buttonref_ids[b], value, index)
 
             if b.dreftype == DREF_TYPE.CMD:
                 print(f"dref cmd {value} {b.type}")
@@ -555,7 +608,10 @@ def send_change_to_xp(name, channel, value):
                 if b.type == BUTTON.HOLD and value:
                     print("send cmd")
                     xp.command_activate_duration(xp.buttonref_ids[b], 4)
-            break
+                if (b.type == BUTTON.SWITCH and value) or (BUTTON.SWITCH_INVERSE and value):
+                    print("send cmd of switch")
+                    xp.command_activate_duration(xp.buttonref_ids[b], 4)
+            #break
     if not found:
         print(f"[A107] {name}, {channel} not found")
 
@@ -570,6 +626,22 @@ def mf_value_changed(cmd, name, arg):
         send_change_to_xp(name, int(arg[0]), int(arg[1]))
     elif cmd == mf.MF.CMD.ANALOG_CHANGE:
         print(f"Value changed (Analog): {name}, {int(arg[0])}") # value
+
+
+def process_combined_button(button, index = None):
+    print(f"[A107] search for combined buttonx: {button}")
+    for cb in combinedlist:
+        for i in range(0,2):
+            if button == cb.buttons[i]:
+                b1_state = xp.datacache[cb.dataref + '_' + cb.buttons[0].label]
+                b2_state = xp.datacache[cb.dataref + '_' + cb.buttons[1].label]
+                if b1_state != None and b2_state != None:
+                    idx = b1_state + 2 * b2_state
+                    value = cb.truth_table[idx]
+                    print(f"[A107] found combined button {cb} [{idx}] = {value}")
+                    xp.dataref_set_value(xp.buttonref_ids[cb.buttons[0]], value, index)
+                else:
+                    print(f"[A107] found combined button {cb} but missing second switch data")
 
 
 class device:
@@ -590,6 +662,7 @@ class device:
         print(f"done")
         xplane_connected = True
         xp = self.xp
+        create_combined_button_list_a107()
 
 
     def disconnected(self):
