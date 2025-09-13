@@ -398,9 +398,9 @@ def create_button_list_a107():
     #buttonlist.append(Button("Bat1", MF_MP2, 15, "sim/cockpit2/electrical/battery_on", DREF_TYPE.ARRAY_0, BUTTON.SWITCH))# gets overwirtten
     #buttonlist.append(Button("Bat2", MF_MP2, 14, "sim/cockpit2/electrical/battery_on", DREF_TYPE.ARRAY_1, BUTTON.SWITCH)) # toto bats volt read AirbusFBW/BatVolts
     #buttonlist.append(Button("APU Gen", MF_MP1, 8, "AirbusFBW/APUGenOHPArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH)) # gen array is read only
-    buttonlist.append(Button("IR1", MF_MP1, 13, None, DREF_TYPE.ARRAY_12, BUTTON.SWITCH))
-    buttonlist.append(Button("IR2", MF_MP1, 12, None, DREF_TYPE.ARRAY_12, BUTTON.SWITCH))
-    buttonlist.append(Button("IR3", MF_MP1, 11, None, DREF_TYPE.ARRAY_12, BUTTON.SWITCH))
+    buttonlist.append(Button("IR1", MF_MP1, 13, "sim/flight_controls/brakes_1_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
+    buttonlist.append(Button("IR2", MF_MP1, 12, "sim/flight_controls/brakes_2_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
+    buttonlist.append(Button("IR3", MF_MP1, 11, "sim/flight_controls/brakes_max_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("ExtPwrON", MF_MP2, 13, "toliss_airbus/eleccommands/ExtPowOn", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("ExtPwrOFF", MF_MP2, 13, "toliss_airbus/eleccommands/ExtPowOff", DREF_TYPE.CMD, BUTTON.SWITCH))
     #buttonlist.append(Button("TCAS 1", MF_MP4, 13, None, DREF_TYPE.ARRAY_12, BUTTON.SWITCH_COMBINED))
