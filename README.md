@@ -12,13 +12,11 @@ Tested with:
 
 Supported Hardware:
  * Rowsfire A107: work in progress
-   * BAT1&2 volatege is missing
+   * BAT2 voltage samteimes wrong
    * BAT1&2 button - I did not find the correct dataref yet
    * APU GEN button - I did not find the correct dataref yet
-   * APU Fire indication - I did not find the correct dataref yet
    * APU Bleed Fault indication - I did not find the correct dataref yet
-   * IR1-3 switches: ATT can not be selected
-   * TACS switch - I did not find the correct dataref yet
+   * On IR1-3 switches autobrakes can be set
  * Winwing MCDU: fully supported
  * Winwing FCU: fully supported
  * Winwing EFIS-R: fully supported
