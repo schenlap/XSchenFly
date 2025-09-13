@@ -193,7 +193,7 @@ class Led:
         self.id = nr
         self.label = label
         self.mf_name = mf_name # Mobiflight
-        self.mf_pin = mf_pin # pin number (on shift or multiplexer)
+        self.mf_pin = mf_pin # pin number (on shift, multiplexer or 7-segments)
         self.dataref = dataref
         self.dreftype = dreftype
         self.eval = eval
@@ -222,6 +222,11 @@ def rawsfire_a107_set_led(led, brightness):
         brightness = 255
 
     mf_dev.set_pin(led.mf_name, led.mf_pin, brightness)
+
+
+def rawsfire_a107_set_lcd(led, value):
+    mf_dev.set_modul(led.mf_pin, value)
+    sleep(0.03) # we have to wait a short time, otherwise the devise does no execute the next statement
 
 
 def lcd_init(ep):
@@ -257,6 +262,8 @@ MF_MP1 = "Multiplexer 1" # Input
 MF_MP2 = "Multiplexer 2" # Input
 MF_MP3 = "Multiplexer 3" # Input
 MF_MP4 = "Multiplexer 4" # Input
+
+MF_SEGMENT1 = "SEGMENT 1" # Bat1&2 display
 
 def create_led_list_a107():  # TODO check sim/cockpit/electrical/avionics_on == 1
     #ledlist.append(Led(0, "APU_MASTER_ON_LED", MF_SR2, 11, "AirbusFBW/APUMaster"))
@@ -312,6 +319,9 @@ def create_led_list_a107():  # TODO check sim/cockpit/electrical/avionics_on == 
     ledlist.append(Led(47, "ADIRS_IR3_FAULT_LED", MF_SR1, 10, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_11))
     ledlist.append(Led(48, "APU_GEN_FAULT_LED",  MF_SR2, 2, "AirbusFBW/OHPLightsATA24_Raw", DREF_TYPE.ARRAY_5))
     ledlist.append(Led(49, "EMERGENCY EXIT LIGHT OFF",  MF_SR2, 22, "AirbusFBW/OHPLightsATA31_Raw", DREF_TYPE.ARRAY_12, "==0"))
+    ledlist.append(Led(50, "BAT1_VOLTAGE",  MF_SEGMENT1, [16, 56], "AirbusFBW/BatVolts", DREF_TYPE.ARRAY_0, "int(($+0.05)*10)")) # round fist decimal
+    ledlist.append(Led(51, "BAT2_VOLTAGE",  MF_SEGMENT1, [2, 7], "AirbusFBW/BatVolts", DREF_TYPE.ARRAY_1, "int(($+0.05)*10)"))
+
 
 
 def create_button_list_a107():
@@ -383,7 +393,13 @@ def create_button_list_a107():
  
 
 def startupscreen(device, device_config, version, new_version):
-    print("TODO set startupscreen")
+    for l in ledlist:
+        if l.label == "BAT1_VOLTAGE":
+            for i in range(0,11):
+                rawsfire_a107_set_lcd(l,str(i).zfill(3))
+            rawsfire_a107_set_lcd(l,"---")
+            sleep(0.5)
+            break
 
 
 def xplane_get_dataref_ids(xp):
@@ -460,9 +476,14 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                     for l2 in ledobj: # we received an array, send update to all objects
                         if idx == l2.dreftype.value - DREF_TYPE.ARRAY_0.value:
                             value_new = eval_data(value[idx], l2.eval)
-                            #todo set datachache
-                            print(f"[A107]                       array value[{idx}] of {l2.label} = {value_new}")
-                            rawsfire_a107_set_led(l2, value_new)
+                            #print(f"[A107] array value[{idx}] of {l2.label} = {value_new}")
+                            if "SEGMENT" not in l2.mf_name:
+                                rawsfire_a107_set_led(l2, value_new)
+                            else: # SEGEMENT
+                                if value_new != xp.datacache[l2.dataref]:
+                                    rawsfire_a107_set_lcd(l2, value_new)
+                            xp.datacache[l2.dataref] = value_new
+
                     idx += 1
             elif type(ledobj) == list and type(value) != list: # multiple leds on same dataref (without dataref arry), for eval
                 for l in ledobj:
@@ -470,11 +491,17 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                     #print(f" found: {l.label} = {value}")
                     #xp.datacache[ledobj.dataref] = value
                     rawsfire_a107_set_led(l, value_new)
-            else: # single onject
+            else: # single object (pin or segment)
                 value = eval_data(value, ledobj.eval)
                 print(f" found: {ledobj.label} = {value}")
+                if "SEGMENT" not in ledobj.mf_name:
+                    xp.datacache[ledobj.dataref] = value
+                    rawsfire_a107_set_led(ledobj, value)
+                else:
+                    value = int((value + 0.05) * 10) # add first decimal place and round
+                    if value != xp.datacache[ledobj.dataref]:
+                        rawsfire_a107_set_lcd(ledobj, value)
                 xp.datacache[ledobj.dataref] = value
-                rawsfire_a107_set_led(ledobj, value)
         else:
             print(f"[A107] {ref_id} not found")
 

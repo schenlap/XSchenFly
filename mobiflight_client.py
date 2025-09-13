@@ -24,6 +24,7 @@ class MF:
 
     #@unique
     class CMD(Enum):
+        SET_MODUL = 1 # 7 segment
         SET_PIN = 2
         STATUS = 5
         BUTTON_CHANGE = 7
@@ -31,6 +32,7 @@ class MF:
         INFO = 10
         GET_CONFIG = 12
         CONFIG_ACTIVATED = 17
+        SET_MODUL_BRIGHTNESS = 26
         SET_SHIFT_REGISTER_PINS = 27
         ANALOG_CHANGE = 28
         INPUT_SHIFTER_CHANGE = 29
@@ -97,6 +99,9 @@ class MF:
             if self.type == MF.TYPE.OUTPUT:
                 cmd = MF.CMD.SET_PIN
                 self.msg_prefix = str(cmd.value) + "," # pin and value follow
+            if self.type == MF.TYPE.LED_SEGEMENT_MULTI:
+                cmd = MF.CMD.SET_MODUL
+                self.msg_prefix = str(cmd.value) + "," # modul,submodul,string,decimal_maks,mask follow
     
 
     def start(self, serialnumber, value_changed_cb):
@@ -216,13 +221,26 @@ class MF:
 
     def set_pin(self, name, nr, value):
         for p in self.pinlist:
-            print(f"pin: {p.name} == {name}")
+            #print(f"pin: {p.name} == {name}")
             if p.name == name:
                 msg = p.msg_prefix + str(nr) + "," + str(value) + ";"
                 #print(f"send {msg}")
                 self.ser.write(bytearray(msg, 'ascii'))
                 return
-        print(f"pin {name} not found")
+        if name != None:
+            print(f"pin {name} not found")
+
+
+    def set_modul(self, mask, value): # 7 segment display
+        # wait same time - 0.02 to 0.03 sec before sending next command
+        # otherwise the device will ignore the command
+        # "1,0,0,xxx,16,56;" -> 16 .. comma mask
+        msg = str(MF.CMD.SET_MODUL.value) + ",0,0," + str(value) + "," + str(mask[0]) + "," + str(mask[1]) + ";"
+        self.ser.write(bytearray(msg, 'ascii'))
+
+
+    def set_modul_brightness(self, name, nr, brightness):
+        print(f"set modul brightness: {name} {nr} {brightness}")
     
 
     def close(self):
