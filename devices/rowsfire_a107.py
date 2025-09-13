@@ -663,6 +663,7 @@ class device:
         xplane_connected = True
         xp = self.xp
         create_combined_button_list_a107()
+        mf_dev.force_sync(2)
 
 
     def disconnected(self):

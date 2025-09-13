@@ -1,7 +1,7 @@
 #!./myenv/bin/python3
 from enum import Enum, IntEnum
 
-from threading import Thread
+from threading import Thread, Timer
 from time import sleep
 
 import serial
@@ -32,11 +32,13 @@ class MF:
         INFO = 10
         GET_CONFIG = 12
         CONFIG_ACTIVATED = 17
+        TRIGGER = 23 # read buttons on startup
         SET_MODUL_BRIGHTNESS = 26
         SET_SHIFT_REGISTER_PINS = 27
         ANALOG_CHANGE = 28
         INPUT_SHIFTER_CHANGE = 29
         DIGINMUX_CHANGE = 30
+        TRIGGER_DONE = 34
     
     class TYPE(Enum):
         BUTTON = 1
@@ -217,6 +219,12 @@ class MF:
         if self.activated:
             print(f"send {msg}")
         self.ser.write(bytearray(msg, 'ascii'))
+
+
+    def send_trigger(self):
+        msg = str(MF.CMD.TRIGGER.value) + ";"
+        print(f"MF: force input sync {msg}")
+        self.ser.write(bytearray(msg, 'ascii'))
     
 
     def set_pin(self, name, nr, value):
@@ -241,7 +249,12 @@ class MF:
 
     def set_modul_brightness(self, name, nr, brightness):
         print(f"set modul brightness: {name} {nr} {brightness}")
-    
+
+
+    def force_sync(self, delay):
+        t = Timer(delay, self.send_trigger)
+        t.start()
+
 
     def close(self):
         self.init = False
