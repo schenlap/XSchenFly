@@ -20,7 +20,7 @@ import mobiflight_client as mf
 XPLANE_WS_URL = "ws://localhost:8086/api/v2"
 XPLANE_REST_URL = "http://localhost:8086/api/v2"
 
-MOBIFLIGHT_SERIAL = "SN-301-533"
+MOBIFLIGHT_SERIAL = "SN-XXX-XXX"
 
 xp = None
 mf_dev = None
