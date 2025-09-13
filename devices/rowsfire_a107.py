@@ -400,8 +400,8 @@ def create_button_list_a107():
     buttonlist.append(Button(53, "IR1", MF_MP1, 13, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
     buttonlist.append(Button(54, "IR2", MF_MP1, 12, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
     buttonlist.append(Button(55, "IR3", MF_MP1, 11, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
-    buttonlist.append(Button(56, "ExtPwrON", MF_MP2, 13, "toliss_airbus/eleccommands/ExtPowOn", DREF_TYPE.CMD, BUTTON.SWITCH))
-    buttonlist.append(Button(56, "ExtPwrOFF", MF_MP2, 13, "toliss_airbus/eleccommands/ExtPowOff", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
+    buttonlist.append(Button(56, "ExtPwrON", MF_MP2, 13, "toliss_airbus/eleccommands/ExtPowOn", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
+    buttonlist.append(Button(56, "ExtPwrOFF", MF_MP2, 13, "toliss_airbus/eleccommands/ExtPowOff", DREF_TYPE.CMD, BUTTON.SWITCH))
     #buttonlist.append(Button(57, "TCAS 1", MF_MP4, 13, None, DREF_TYPE.ARRAY_12, BUTTON.SWITCH_COMBINED))
     #buttonlist.append(Button(58, "TCAS 2", MF_MP4, 12, None, DREF_TYPE.ARRAY_12, BUTTON.SWITCH_COMBINED))
     buttonlist.append(Button(59, "Exit 1", MF_MP4, 5, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_10, BUTTON.SWITCH_COMBINED))
@@ -550,12 +550,13 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
             print(f"[A107] {ref_id} not found")
 
 
-def send_change_to_xp(name, channel, value):
+def send_change_to_xp(name, channel, value_orig):
     global xp
     print(f"[A107] search for: {name}, {channel}")
 
     found = False
     for b in buttonlist:
+        value = value_orig
         if name == b.mf_button and channel == b.mf_pin:
             print(f"found {b}")
             found = True
@@ -608,7 +609,7 @@ def send_change_to_xp(name, channel, value):
                 if b.type == BUTTON.HOLD and value:
                     print("send cmd")
                     xp.command_activate_duration(xp.buttonref_ids[b], 4)
-                if (b.type == BUTTON.SWITCH and value) or (BUTTON.SWITCH_INVERSE and value):
+                if (b.type == BUTTON.SWITCH  or b.type == BUTTON.SWITCH_INVERSE) and value:
                     print("send cmd of switch")
                     xp.command_activate_duration(xp.buttonref_ids[b], 4)
             #break
