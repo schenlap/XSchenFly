@@ -242,14 +242,6 @@ def rawsfire_a107_set_led(led, brightness):
 
 def rawsfire_a107_set_lcd(led, value):
     mf_dev.set_modul(led.mf_pin, value)
-    sleep(0.03) # we have to wait a short time, otherwise the devise does no execute the next statement
-
-
-def lcd_init(ep):
-    return # TODO
-    data = [0xf0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0] # init packet
-    cmd = bytes(data)
-    ep.write(cmd)
 
 
 def rawsfire_107_set_lcd(device, speed, heading, alt, vs):
@@ -257,17 +249,7 @@ def rawsfire_107_set_lcd(device, speed, heading, alt, vs):
     return
 
 
-a107_device = None # usb /dev/inputx device
-
 datacache = {}
-
-# List of datarefs without led connection to request.
-datarefs = [
-    ("AirbusFBW/HDGdashed", 2)
-  ]
-
-usb_retry = False
-
 xp = None
 
 
@@ -373,19 +355,19 @@ def create_button_list_a107():
     buttonlist.append(Button("Fire Test APU", MF_MP2, 4, "AirbusFBW/FireTestAPU", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Fire Test Eng1", MF_MP2, 5, "AirbusFBW/FireTestENG1", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Fire Test Eng2", MF_MP2, 3, "AirbusFBW/FireTestENG2", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
-    buttonlist.append(Button("Adirs ON Bat", MF_MP1, 14, None, DREF_TYPE.ARRAY_12, BUTTON.TOGGLE))
+    buttonlist.append(Button("Adirs ON Bat", MF_MP1, 14, "sim/annunciator/clear_master_warning", DREF_TYPE.CMD, BUTTON.TOGGLE))
     buttonlist.append(Button("Smoking Light 1", MF_MP4, 3, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_12, BUTTON.SWITCH_COMBINED))
     buttonlist.append(Button("Smoking Light 2", MF_MP3, 14, "AirbusFBW/OHPLightSwitches", DREF_TYPE.ARRAY_12, BUTTON.SWITCH_COMBINED))
     buttonlist.append(Button("Calls", MF_MP2, 2, "AirbusFBW/purser/fwd", DREF_TYPE.CMD, BUTTON.HOLD))
     buttonlist.append(Button("Adirs 1-1", MF_MP4, 6, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH_COMBINED))
     buttonlist.append(Button("Adirs 1-2", MF_MP4, 7, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH_COMBINED))
-    #buttonlist.append(Button("Adirs 1-3", MF_MP4, 9, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SEND_2))
+    #buttonlist.append(Button("Adirs 1-3", MF_MP4, 9, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SEND_2)) # not needed
     buttonlist.append(Button("Adirs 2-1", MF_MP4, 10, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SWITCH_COMBINED))
     buttonlist.append(Button("Adirs 2-2", MF_MP4, 11, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SWITCH_COMBINED))
-    #buttonlist.append(Button("Adirs 2-3", MF_MP4, 8, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SEND_2))
+    #buttonlist.append(Button("Adirs 2-3", MF_MP4, 8, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SEND_2)) # not needed
     buttonlist.append(Button("Adirs 3-1", MF_MP4, 8, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_2, BUTTON.SWITCH_COMBINED))
     buttonlist.append(Button("Adirs 3-2", MF_MP4, 9, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_2, BUTTON.SWITCH_COMBINED))
-    #buttonlist.append(Button("Adirs 3-3", MF_MP4, 9, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_2, BUTTON.SEND_2))
+    #buttonlist.append(Button("Adirs 3-3", MF_MP4, 9, "AirbusFBW/ADIRUSwitchArray", DREF_TYPE.ARRAY_2, BUTTON.SEND_2)) # not needed
     buttonlist.append(Button("Gnd ctrl", MF_MP1, 10, "AirbusFBW/CvrGndCtrl", DREF_TYPE.DATA, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Crewsupply", MF_MP1, 9, "AirbusFBW/CrewOxySwitch", DREF_TYPE.DATA, BUTTON.SWITCH))
     buttonlist.append(Button("Pump1", MF_MP2, 10, "AirbusFBW/FuelOHPArray", DREF_TYPE.ARRAY_2, BUTTON.SWITCH))
@@ -396,7 +378,7 @@ def create_button_list_a107():
     buttonlist.append(Button("Right Pump1", MF_MP2, 7, "AirbusFBW/FuelOHPArray", DREF_TYPE.ARRAY_4, BUTTON.SWITCH))
     buttonlist.append(Button("Right Pump2", MF_MP2, 6, "AirbusFBW/FuelOHPArray", DREF_TYPE.ARRAY_5, BUTTON.SWITCH))
     #buttonlist.append(Button("Bat1", MF_MP2, 15, "sim/cockpit2/electrical/battery_on", DREF_TYPE.ARRAY_0, BUTTON.SWITCH))# gets overwirtten
-    #buttonlist.append(Button("Bat2", MF_MP2, 14, "sim/cockpit2/electrical/battery_on", DREF_TYPE.ARRAY_1, BUTTON.SWITCH)) # toto bats volt read AirbusFBW/BatVolts
+    #buttonlist.append(Button("Bat2", MF_MP2, 14, "sim/cockpit2/electrical/battery_on", DREF_TYPE.ARRAY_1, BUTTON.SWITCH))
     #buttonlist.append(Button("APU Gen", MF_MP1, 8, "AirbusFBW/APUGenOHPArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH)) # gen array is read only
     buttonlist.append(Button("IR1", MF_MP1, 13, "sim/flight_controls/brakes_1_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("IR2", MF_MP1, 12, "sim/flight_controls/brakes_2_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
