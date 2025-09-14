@@ -444,9 +444,12 @@ def xplane_get_dataref_ids(xp):
                 continue
             if l.dreftype.value >= DREF_TYPE.ARRAY_0.value or l.dreftype == DREF_TYPE.DATA_MULTIPLE:
                 larray = []
+                idx = 0
                 for l2 in ledlist:
                     if l2.dataref == l.dataref:
                         larray.append(l2)
+                        xp.datacache[l.dataref + '_' + str(idx)] = 0
+                        idx += 1
                 xp.led_dataref_ids[id] = larray.copy()
             else:
                 xp.led_dataref_ids[id] = l
@@ -507,9 +510,10 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                             if "SEGMENT" not in l2.mf_name:
                                 rawsfire_a107_set_led(l2, value_new)
                             else: # SEGEMENT
-                                if value_new != xp.datacache[l2.dataref]:
+                                if value_new != xp.datacache[l2.dataref + '_' + str(idx)]:
+                                    print(f"[A107] array value[{idx}] of {l2.label} = {value_new}")
                                     rawsfire_a107_set_lcd(l2, value_new)
-                            xp.datacache[l2.dataref] = value_new
+                            xp.datacache[l2.dataref + '_' + str(idx)] = value_new
 
                     idx += 1
             elif type(ledobj) == list and type(value) != list: # multiple leds on same dataref (without dataref arry), for eval
