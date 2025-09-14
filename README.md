@@ -11,13 +11,18 @@ Tested with:
  * Toliss A319, A320Neo, A321Neo, A339, A340-600
 
 Supported Hardware:
- * Rowsfire A107: work in progress
-   * BAT2 voltage samteimes wrong
+ * Rowsfire A107: mostly supported
    * BAT1&2 button - I did not find the correct dataref yet
    * APU GEN button - I did not find the correct dataref yet
    * APU Bleed Fault indication - I did not find the correct dataref yet
-   * On IR1-3 switches autobrakes can be set
+   * APU Fire Button - I did not find the correct dataref yet
+   * Special features for not used buttons
+     * IR1-3 switches: autobrakes (min, med, max) can be set
+     * ADIRS ON BAT switch: master warning can be cleared
  * Winwing MCDU: fully supported
+   * Special features for not used buttons
+     * blank button1: Toliss ISCS screen
+     * blank button2: call cabine
  * Winwing FCU: fully supported
  * Winwing EFIS-R: fully supported
  * Winwing EFIS-L: fully supported
