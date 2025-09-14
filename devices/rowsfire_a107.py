@@ -224,12 +224,12 @@ device_config = DEVICEMASK.NONE
 def rawsfire_a107_set_leds(leds, brightness):
     if isinstance(leds, list):
         for i in range(len(leds)):
-            rawsfire_a107_set_led(leds[i], brightness)
+            rowsfire_a107_set_led(leds[i], brightness)
     else:
-        rawsfire_a107_set_led(leds, brightness)
+        rowsfire_a107_set_led(leds, brightness)
 
 
-def rawsfire_a107_set_led(led, brightness):
+def rowsfire_a107_set_led(led, brightness):
     global mf_dev
 
     if brightness == 1:
@@ -240,7 +240,7 @@ def rawsfire_a107_set_led(led, brightness):
     mf_dev.set_pin(led.mf_name, led.mf_pin, brightness)
 
 
-def rawsfire_a107_set_lcd(led, value):
+def rowsfire_a107_set_lcd(led, value):
     mf_dev.set_modul(led.mf_pin, value)
 
 
@@ -421,12 +421,16 @@ def create_combined_button_list_a107():
 
 def startupscreen(device, device_config, version, new_version):
     for l in ledlist:
-        if l.label == "BAT1_VOLTAGE":
-            for i in range(0,11):
-                rawsfire_a107_set_lcd(l,str(i).zfill(3))
-            rawsfire_a107_set_lcd(l,"---")
-            sleep(0.5)
-            break
+        if "VOLTAGE" in l.label:
+            for i in range(0,2):
+                rowsfire_a107_set_lcd(l,284)
+        rowsfire_a107_set_led(l,1)
+    sleep(2)
+    for l in ledlist:
+        if "VOLTAGE" in l.label:
+            for i in range(0,2):
+                rowsfire_a107_set_lcd(l,"---")
+        rowsfire_a107_set_led(l,0)
 
 
 def xplane_get_dataref_ids(xp):
@@ -508,11 +512,11 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                             value_new = eval_data(value[idx], l2.eval)
                             #print(f"[A107] array value[{idx}] of {l2.label} = {value_new}")
                             if "SEGMENT" not in l2.mf_name:
-                                rawsfire_a107_set_led(l2, value_new)
+                                rowsfire_a107_set_led(l2, value_new)
                             else: # SEGEMENT
                                 if value_new != xp.datacache[l2.dataref + '_' + str(idx)]:
                                     print(f"[A107] array value[{idx}] of {l2.label} = {value_new}")
-                                    rawsfire_a107_set_lcd(l2, value_new)
+                                    rowsfire_a107_set_lcd(l2, value_new)
                             xp.datacache[l2.dataref + '_' + str(idx)] = value_new
 
                     idx += 1
@@ -521,17 +525,17 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                     value_new = eval_data(value, l.eval)
                     #print(f" found: {l.label} = {value}")
                     #xp.datacache[ledobj.dataref] = value
-                    rawsfire_a107_set_led(l, value_new)
+                    rowsfire_a107_set_led(l, value_new)
             else: # single object (pin or segment)
                 value = eval_data(value, ledobj.eval)
                 print(f" found: {ledobj.label} = {value}")
                 if "SEGMENT" not in ledobj.mf_name:
                     xp.datacache[ledobj.dataref] = value
-                    rawsfire_a107_set_led(ledobj, value)
+                    rowsfire_a107_set_led(ledobj, value)
                 else:
                     value = int((value + 0.05) * 10) # add first decimal place and round
                     if value != xp.datacache[ledobj.dataref]:
-                        rawsfire_a107_set_lcd(ledobj, value)
+                        rowsfire_a107_set_lcd(ledobj, value)
                 xp.datacache[ledobj.dataref] = value
         else:
             print(f"[A107] {ref_id} not found")
