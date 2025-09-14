@@ -219,7 +219,7 @@ class MF:
                     self.value_changed_cb(cmd, msg_split[1], msg_split[2:])
     
 
-    def __add_to_queue(self, datastring, delay=0.05):
+    def __add_to_queue(self, datastring, delay=0.01):
         item = MF.QUEUE_DATA(datastring, delay)
         self.queue.put(item)
 
