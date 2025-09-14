@@ -1,11 +1,10 @@
 #!./myenv/bin/python3
 from enum import Enum, IntEnum
-
-from threading import Thread, Timer
-from time import sleep
-
+import queue
 import serial
 import serial.tools.list_ports as list_ports
+from threading import Thread, Timer
+from time import sleep
 
 class MF:
     # mobiflight returns inputs on every change, e.g: b'28,Analog InputA0,1001;\r\n'
@@ -20,6 +19,9 @@ class MF:
         self.value_changed_cb = None
 
         self.pinlist = []
+        self.queue = queue.Queue()
+
+        worker_thread = None
 
 
     #@unique
@@ -104,10 +106,18 @@ class MF:
             if self.type == MF.TYPE.LED_SEGEMENT_MULTI:
                 cmd = MF.CMD.SET_MODUL
                 self.msg_prefix = str(cmd.value) + "," # modul,submodul,string,decimal_maks,mask follow
-    
+
+    class QUEUE_DATA:
+        def __init__(self, data_string, delay):
+            self.data_string = data_string
+            self.delay = delay
+
 
     def start(self, serialnumber, value_changed_cb):
         self.value_changed_cb = value_changed_cb
+
+        worker_thread = Thread(target=self.__worker)
+        worker_thread.start()
 
         self.rx_thread = Thread(target=self.__receive)
         self.rx_thread.start()
@@ -117,17 +127,17 @@ class MF:
         startup_thread.join(timeout=4)
 
         if self.serialnumber != None and serialnumber == None:
-            print(f"   found mobiflight device {self.serialnumber} without checking it")
+            print(f"[MF]   found mobiflight device {self.serialnumber} without checking it")
             return True
         if self.serialnumber == serialnumber or ():
-            print(f"   found mobiflight device {serialnumber}")
+            print(f"[MF]   found mobiflight device {serialnumber}")
             return True
         
         if not self.activated:
-            print("   no mobiflight device found")
+            print("[MF]   no mobiflight device found")
             return False
 
-        print(f"   Not using mobiflight device {self.serialnumber}, expected {serialnumber}")
+        print(f"[MF]   Not using mobiflight device {self.serialnumber}, expected {serialnumber}")
         return False
 
 
@@ -139,6 +149,15 @@ class MF:
                 print(f"   {p.device}: {p.manufacturer} {p.vid}:{p.pid}")
                 result.append(p)
         return result
+
+
+    def __worker(self):
+        while True:
+            item = self.queue.get()
+            print(f"[MF] sending {item.data_string} with delay {item.delay}, waiting {self.queue.qsize()} items")
+            self.ser.write(bytearray(item.data_string, 'ascii'))
+            sleep(item.delay)
+            self.queue.task_done()
 
 
     def __receive(self):
@@ -158,7 +177,7 @@ class MF:
 
             if cmd == self.CMD.INFO and len(msg_split) == 6:
                 self.serialnumber = msg_split[3]
-                print(f"   received serial number: {self.serialnumber}")
+                print(f"[MF]   received serial number: {self.serialnumber}")
             
             if cmd == self.CMD.INFO and len(msg_split) == 2: # return from GET_CONFIG
                 print(f"{cmd} {msg_split[1:]}")
@@ -200,6 +219,11 @@ class MF:
                     self.value_changed_cb(cmd, msg_split[1], msg_split[2:])
     
 
+    def __add_to_queue(self, datastring, delay=0.05):
+        item = MF.QUEUE_DATA(datastring, delay)
+        self.queue.put(item)
+
+
     def __startup_device(self):
         while not self.activated:
             sleep(0.2)
@@ -215,36 +239,32 @@ class MF:
         if not arg:
             msg = str(cmd.value) + ";"
         else:
-            msg = str(cmd.value) + "," + str(arg[0]) + "," + str(arg[1]) + ";"
-        if self.activated:
-            print(f"send {msg}")
-        self.ser.write(bytearray(msg, 'ascii'))
+            msg = str(cmd.value)
+            for a in arg:
+                msg += "," + a
+            msg += + ";"
+        self.__add_to_queue(msg)
 
 
     def send_trigger(self):
-        msg = str(MF.CMD.TRIGGER.value) + ";"
-        print(f"MF: force input sync {msg}")
-        self.ser.write(bytearray(msg, 'ascii'))
+        print(f"MF: force input sync")
+        self.__send_command(MF.CMD.TRIGGER)
     
 
     def set_pin(self, name, nr, value):
         for p in self.pinlist:
-            #print(f"pin: {p.name} == {name}")
+            #print(f"[MF] pin: {p.name} == {name}")
             if p.name == name:
-                msg = p.msg_prefix + str(nr) + "," + str(value) + ";"
-                #print(f"send {msg}")
-                self.ser.write(bytearray(msg, 'ascii'))
+                msg = p.msg_prefix + str(nr) + "," + str(int(value)) + ";"
+                self.__add_to_queue(msg)
                 return
         if name != None:
-            print(f"pin {name} not found")
+            print(f"[MF] pin {name} not found")
 
 
     def set_modul(self, mask, value): # 7 segment display
-        # wait same time - 0.02 to 0.03 sec before sending next command
-        # otherwise the device will ignore the command
-        # "1,0,0,xxx,16,56;" -> 16 .. comma mask
         msg = str(MF.CMD.SET_MODUL.value) + ",0,0," + str(value) + "," + str(mask[0]) + "," + str(mask[1]) + ";"
-        self.ser.write(bytearray(msg, 'ascii'))
+        self.__add_to_queue(msg, 0.1)
 
 
     def set_modul_brightness(self, name, nr, brightness):
@@ -274,10 +294,10 @@ def mf_value_changed(cmd, name, arg):
 
 
 def main():
-    print("find mobiflight devices:")
+    print("[MF] find mobiflight devices:")
     ports = MF.serial_ports(None)
     for port_mf in ports:
-        print(f"testing {port_mf}")
+        print(f"[MF] testing {port_mf}")
         mf = MF(port_mf.device)
         if mf.start(None, mf_value_changed):
             break
@@ -286,10 +306,10 @@ def main():
             mf = None
 
     if not mf:
-        print("No mobiflight device found")
+        print("[MF] No mobiflight device found")
         exit()
 
-    print("Mobiflight device startet successful")
+    print("[MF] Mobiflight device startet successful")
 
     sleep(1)
     mf.set_pin("Led", 13, 255)
@@ -298,7 +318,7 @@ def main():
     sleep(5)
 
     mf.close()
-    print("-- END --")
+    print("[MF]-- END --")
 
 if __name__ == "__main__":
     main()
