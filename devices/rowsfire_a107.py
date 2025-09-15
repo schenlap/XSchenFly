@@ -349,7 +349,7 @@ def create_button_list_a107():
     buttonlist.append(Button("Pack1 Off", MF_MP1, 7, "toliss_airbus/aircondcommands/Pack1Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Pack2 On", MF_MP1, 5, "toliss_airbus/aircondcommands/Pack2On", DREF_TYPE.CMD, BUTTON.SWITCH))
     buttonlist.append(Button("Pack2 Off", MF_MP1, 5, "toliss_airbus/aircondcommands/Pack2Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
-    buttonlist.append(Button("Fire APU", MF_MP2, 0, None, DREF_TYPE.ARRAY_12, BUTTON.SWITCH_INVERSE))
+    buttonlist.append(Button("Fire APU", MF_MP2, 0, "sim/electrical/APU_fire_shutoff", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE)) # does not work
     buttonlist.append(Button("Fire Eng1", MF_MP2, 1, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Fire Eng2", MF_MP3, 15, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Fire Test APU", MF_MP2, 4, "AirbusFBW/FireTestAPU", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
@@ -381,7 +381,8 @@ def create_button_list_a107():
     buttonlist.append(Button("Bat1 Off", MF_MP2, 15, "toliss_airbus/eleccommands/Bat1Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Bat2 On", MF_MP2, 14, "toliss_airbus/eleccommands/Bat2On", DREF_TYPE.CMD, BUTTON.SWITCH))
     buttonlist.append(Button("Bat2 Off", MF_MP2, 14, "toliss_airbus/eleccommands/Bat2Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
-    #buttonlist.append(Button("APU Gen", MF_MP1, 8, "AirbusFBW/APUGenOHPArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH)) # gen array is read only
+    buttonlist.append(Button("APU Gen On", MF_MP1, 8, "sim/electrical/APU_generator_on", DREF_TYPE.CMD, BUTTON.SWITCH)) # does not work
+    buttonlist.append(Button("APU Gen Off", MF_MP1, 8, "sim/electrical/APU_generator_off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE)) # does not work
     buttonlist.append(Button("IR1", MF_MP1, 13, "sim/flight_controls/brakes_1_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("IR2", MF_MP1, 12, "sim/flight_controls/brakes_2_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("IR3", MF_MP1, 11, "sim/flight_controls/brakes_max_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
