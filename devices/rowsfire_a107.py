@@ -377,8 +377,10 @@ def create_button_list_a107():
     buttonlist.append(Button("Pump Modesel", MF_MP2, 9, "AirbusFBW/FuelOHPArray", DREF_TYPE.ARRAY_6, BUTTON.SWITCH))
     buttonlist.append(Button("Right Pump1", MF_MP2, 7, "AirbusFBW/FuelOHPArray", DREF_TYPE.ARRAY_4, BUTTON.SWITCH))
     buttonlist.append(Button("Right Pump2", MF_MP2, 6, "AirbusFBW/FuelOHPArray", DREF_TYPE.ARRAY_5, BUTTON.SWITCH))
-    #buttonlist.append(Button("Bat1", MF_MP2, 15, "sim/cockpit2/electrical/battery_on", DREF_TYPE.ARRAY_0, BUTTON.SWITCH))# gets overwirtten
-    #buttonlist.append(Button("Bat2", MF_MP2, 14, "sim/cockpit2/electrical/battery_on", DREF_TYPE.ARRAY_1, BUTTON.SWITCH))
+    buttonlist.append(Button("Bat1 On", MF_MP2, 15, "toliss_airbus/eleccommands/Bat1On", DREF_TYPE.CMD, BUTTON.SWITCH))
+    buttonlist.append(Button("Bat1 Off", MF_MP2, 15, "toliss_airbus/eleccommands/Bat1Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
+    buttonlist.append(Button("Bat2 On", MF_MP2, 14, "toliss_airbus/eleccommands/Bat2On", DREF_TYPE.CMD, BUTTON.SWITCH))
+    buttonlist.append(Button("Bat2 Off", MF_MP2, 14, "toliss_airbus/eleccommands/Bat2Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     #buttonlist.append(Button("APU Gen", MF_MP1, 8, "AirbusFBW/APUGenOHPArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH)) # gen array is read only
     buttonlist.append(Button("IR1", MF_MP1, 13, "sim/flight_controls/brakes_1_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("IR2", MF_MP1, 12, "sim/flight_controls/brakes_2_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))

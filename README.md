@@ -12,7 +12,6 @@ Tested with:
 
 Supported Hardware:
  * Rowsfire A107: mostly supported
-   * BAT1&2 button - I did not find the correct dataref yet
    * APU GEN button - I did not find the correct dataref yet
    * APU Bleed Fault indication - I did not find the correct dataref yet
    * APU Fire Button - I did not find the correct dataref yet
