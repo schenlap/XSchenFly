@@ -649,6 +649,10 @@ class device:
     def connected(self):
         global xplane_connected
         global xp
+
+        if not mf_dev:
+            return
+
         print(f"[A107] X-Plane connected")
         xplane_get_dataref_ids(self.xp)
         print(f"[A107] subsrcibe datarefs... ", end="")
