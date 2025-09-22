@@ -34,6 +34,7 @@ class MF:
         INFO = 10
         GET_CONFIG = 12
         CONFIG_ACTIVATED = 17
+        SET_POWERSAVE_MODE = 18 # retrigger to not blank display
         TRIGGER = 23 # read buttons on startup
         SET_MODUL_BRIGHTNESS = 26
         SET_SHIFT_REGISTER_PINS = 27
@@ -125,6 +126,9 @@ class MF:
         startup_thread = Thread(target=self.__startup_device)
         startup_thread.start()
         startup_thread.join(timeout=4)
+
+        self.powersave_thread = Thread(target=self.__powersave_retrigger)
+        self.powersave_thread.start()
 
         if self.serialnumber != None and serialnumber == None:
             print(f"[MF]   found mobiflight device {self.serialnumber} without checking it")
@@ -242,8 +246,15 @@ class MF:
             msg = str(cmd.value)
             for a in arg:
                 msg += "," + a
-            msg += + ";"
+            msg += ";"
         self.__add_to_queue(msg)
+
+
+    def __powersave_retrigger(self):
+        while True:
+            self.__send_command(self.CMD.SET_POWERSAVE_MODE, ["0"])
+            print(f"[MF] retrigger powersave")
+            sleep(60 * 5)
 
 
     def send_trigger(self):
