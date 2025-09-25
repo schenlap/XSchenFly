@@ -870,7 +870,7 @@ class UsbManager:
             {'vid': 0x4098, 'pid': 0xbb35, 'name': 'PFP 3N - Captain (not tested)', 'mask': DEVICEMASK.PFP3N | DEVICEMASK.CAP},
             {'vid': 0x4098, 'pid': 0xbb39, 'name': 'PFP 3N - First Officer (not tested)', 'mask': DEVICEMASK.PFP3N | DEVICEMASK.FO},
             {'vid': 0x4098, 'pid': 0xbb3d, 'name': 'PFP 3N - Observer (not tested)', 'mask': DEVICEMASK.PFP3N | DEVICEMASK.OBS},
-            {'vid': 0x4098, 'pid': 0xbc1d, 'name': 'PFP 4 (not tested)', 'mask': DEVICEMASK.PFP4},
+            #{'vid': 0x4098, 'pid': 0xbc1d, 'name': 'PFP 4 (not tested)', 'mask': DEVICEMASK.PFP4},
             #{'vid': 0x4098, 'pid': 0xbd1d, 'name': 'PFP 7 (not tested)', 'mask': DEVICEMASK.PFP7}
         ]
         for d in devlist:
