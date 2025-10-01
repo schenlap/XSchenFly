@@ -366,9 +366,9 @@ def create_button_list_a107():
     buttonlist.append(Button("Pack1 Off", MF_MP1, 7, "toliss_airbus/aircondcommands/Pack1Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Pack2 On", MF_MP1, 5, "toliss_airbus/aircondcommands/Pack2On", DREF_TYPE.CMD, BUTTON.SWITCH))
     buttonlist.append(Button("Pack2 Off", MF_MP1, 5, "toliss_airbus/aircondcommands/Pack2Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
-    buttonlist.append(Button("Fire APU", MF_MP2, 0, "sim/electrical/APU_fire_shutoff", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE)) # does not work
-    buttonlist.append(Button("Fire Eng1", MF_MP2, 1, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH_INVERSE))
-    buttonlist.append(Button("Fire Eng2", MF_MP3, 15, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SWITCH_INVERSE))
+    buttonlist.append(Button("Fire APU", MF_MP2, 0, "AirbusFBW/FireExOHPArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH)) #fixed -mrivorey
+    buttonlist.append(Button("Fire Eng1", MF_MP2, 1, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH))
+    buttonlist.append(Button("Fire Eng2", MF_MP3, 15, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SWITCH))
     buttonlist.append(Button("Fire Test APU", MF_MP2, 4, "AirbusFBW/FireTestAPU", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Fire Test Eng1", MF_MP2, 5, "AirbusFBW/FireTestENG1", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Fire Test Eng2", MF_MP2, 3, "AirbusFBW/FireTestENG2", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
