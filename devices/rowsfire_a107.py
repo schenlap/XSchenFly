@@ -47,7 +47,7 @@ class XP_Websocket:
             print(f"could not get id for {dataref}, Errorcode: {xpdr_code_response.status_code}:{xpdr_code_response.text}")
             return None
         return xpdr_code_response.json()["data"][0]["id"]
-    
+
 
     def command_id_fetch(self, command):
         xpdr_code_response = self.xp.get(self.rest_url + "/commands", params={"filter[name]": command})
@@ -67,7 +67,7 @@ class XP_Websocket:
         if index != None:
             xpdr_code_response = self.xp.patch(self.rest_url + "/datarefs/" + str(id) + "/value", data=json.dumps(set_msg), params={"index":index})
         else:
-            xpdr_code_response = self.xp.patch(self.rest_url + "/datarefs/" + str(id) + "/value", data=json.dumps(set_msg))   
+            xpdr_code_response = self.xp.patch(self.rest_url + "/datarefs/" + str(id) + "/value", data=json.dumps(set_msg))
 
         if xpdr_code_response.status_code != 200:
             print(f"could not set data for id {id}. Errorcode: {xpdr_code_response.status_code}:{xpdr_code_response.text}")
@@ -174,7 +174,24 @@ class DREF_TYPE(Enum):
     ARRAY_12 = 22
     ARRAY_13 = 23
     ARRAY_14 = 24
-    DATA_MULTIPLE = 25 # more leds use the same dataref
+    ARRAY_15 = 25
+    ARRAY_16 = 26
+    ARRAY_17 = 27
+    ARRAY_18 = 28
+    ARRAY_19 = 29
+    ARRAY_20 = 30
+    ARRAY_21 = 31
+    ARRAY_22 = 32
+    ARRAY_23 = 33
+    ARRAY_24 = 34
+    ARRAY_25 = 35
+    ARRAY_26 = 36
+    ARRAY_27 = 37
+    ARRAY_28 = 38
+    ARRAY_29 = 39
+    ARRAY_30 = 40
+    ARRAY_31 = 41
+    DATA_MULTIPLE = 100 # more leds use the same dataref
 
 
 class Button:
@@ -266,55 +283,55 @@ MF_SEGMENT1 = "SEGMENT 1" # Bat1&2 display
 def create_led_list_a107():  # TODO check sim/cockpit/electrical/avionics_on == 1
     ledlist.append(Led("APU_MASTER_ON_LED", MF_SR2, 11, "AirbusFBW/OHPLightsATA49_Raw", DREF_TYPE.ARRAY_0))
     ledlist.append(Led("APU_MASTER_FAULT_LED", MF_SR2, 10, "AirbusFBW/OHPLightsATA49_Raw", DREF_TYPE.ARRAY_1))
-    ledlist.append(Led("APU_STARTER_ON_LED", MF_SR2, 19, "AirbusFBW/APUStarter"))
-    ledlist.append(Led("APU_STARTER_AVAIL_LED", MF_SR2, 18, "AirbusFBW/APUAvail"))
-    ledlist.append(Led("APU_GEN_OFF_LED",  MF_SR2, 3, "AirbusFBW/APUGenOHPArray", DREF_TYPE.ARRAY_0, "==0"))
+    ledlist.append(Led("APU_STARTER_ON_LED", MF_SR2, 19, "AirbusFBW/OHPLightsATA49_Raw", DREF_TYPE.ARRAY_2))
+    ledlist.append(Led("APU_STARTER_AVAIL_LED", MF_SR2, 18, "AirbusFBW/OHPLightsATA49_Raw", DREF_TYPE.ARRAY_3))
+    ledlist.append(Led("APU_GEN_OFF_LED",  MF_SR2, 3, "AirbusFBW/OHPLightsATA24_Raw", DREF_TYPE.ARRAY_4))
+    ledlist.append(Led("APU_GEN_FAULT_LED",  MF_SR2, 2, "AirbusFBW/OHPLightsATA24_Raw", DREF_TYPE.ARRAY_5))
     ledlist.append(Led("AIR_APU_BLEED_ON_LED", MF_SR2, 7, "AirbusFBW/OHPLightsATA21_Raw", DREF_TYPE.ARRAY_4))
-    #ledlist.append(Led "AIR_APU_BLEED_FAULT_LED", MF_SR2, 6, None))
+    ledlist.append(Led("AIR_APU_BLEED_FAULT_LED", MF_SR2, 6, "AirbusFBW/OHPLightsATA21_Raw", DREF_TYPE.ARRAY_5))
     ledlist.append(Led("AIR_PACK1_BLEED_OFF_LED", MF_SR2, 5, "AirbusFBW/OHPLightsATA21_Raw", DREF_TYPE.ARRAY_6))
     ledlist.append(Led("AIR_PACK1_BLEED_FAULT_LED", MF_SR2, 4, "AirbusFBW/OHPLightsATA21_Raw", DREF_TYPE.ARRAY_7))
     ledlist.append(Led("AIR_PACK2_BLEED_OFF_LED", MF_SR2, 9, "AirbusFBW/OHPLightsATA21_Raw", DREF_TYPE.ARRAY_8))
     ledlist.append(Led("AIR_PACK2_BLEED_FAULT_LED", MF_SR2, 0, "AirbusFBW/OHPLightsATA21_Raw", DREF_TYPE.ARRAY_9))
-    ledlist.append(Led("ADIRS_ON_BAT_LED", MF_SR1, 1, "AirbusFBW/ADIRUOnBat"))
-    ledlist.append(Led("GPWS_FLAP3_ON_LED", MF_SR1, 5, "AirbusFBW/GPWSSwitchArray", DREF_TYPE.ARRAY_3))
-    ledlist.append(Led("RCDR_GND_CTL_ON_LED", MF_SR1, 6, "AirbusFBW/CvrGndCtrl"))
-    ledlist.append(Led("OXYGEN_CREW_SUPPLY_OFF_LED", MF_SR1, 7, "AirbusFBW/CrewOxySwitch", DREF_TYPE.DATA, "==0"))
-    ledlist.append(Led("ANTIICE_WING_ON_LED", MF_SR2, 13, "AirbusFBW/WAILights", DREF_TYPE.DATA_MULTIPLE, "&1"))
-    ledlist.append(Led("ANTIICE_WING_FAULT_LED", MF_SR2, 12, "AirbusFBW/WAILights", DREF_TYPE.DATA_MULTIPLE, "&2"))
-    ledlist.append(Led("ANTIICE_ENG1_ON_LED", MF_SR2, 15, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA_MULTIPLE, "&1"))
-    ledlist.append(Led("ANTIICE_ENG1_FAULT_LED", MF_SR2, 14, "AirbusFBW/ENG1AILights", DREF_TYPE.DATA_MULTIPLE, "&2"))
-    ledlist.append(Led("ANTIICE_ENG2_ON_LED", MF_SR2, 17, "AirbusFBW/ENG2AILights", DREF_TYPE.DATA_MULTIPLE, "&1"))
-    ledlist.append(Led("ANTIICE_ENG2_FAULT_LED", MF_SR2, 8, "AirbusFBW/ENG2AILights", DREF_TYPE.DATA_MULTIPLE, "&2"))
-    ledlist.append(Led("ELEC_BAT1_OFF_LED", MF_SR1, 28, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0, "not($&1)"))
-    ledlist.append(Led("ELEC_BAT1_FAULT_LED", MF_SR1, 29, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_0, "==3"))
-    ledlist.append(Led("ELEC_BAT2_OFF_LED", MF_SR1, 30, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_1, "not($&1)"))
-    ledlist.append(Led("ELEC_BAT2_FAULT_LED", MF_SR1, 31, "AirbusFBW/BatOHPArray", DREF_TYPE.ARRAY_1, "==3"))
-    ledlist.append(Led("ELEC_EXT_PWR_AVAIL_LED", MF_SR1, 24, "AirbusFBW/ExtPowOHPArray", DREF_TYPE.ARRAY_0, "==2"))
-    ledlist.append(Led("ELEC_EXT_PWR_ON_LED",  MF_SR2, 1,"AirbusFBW/ExtPowOHPArray", DREF_TYPE.ARRAY_0, "==1"))
-    ledlist.append(Led("FUEL_L_PUMP1_OFF_LED",  MF_SR1, 15,"AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_0, "==0"))
-    ledlist.append(Led("FUEL_L_PUMP1_FAULT_LED", MF_SR1, 14, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_0, "==3"))
-    ledlist.append(Led("FUEL_L_PUMP2_OFF_LED",  MF_SR1, 17, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_1, "==0"))
-    ledlist.append(Led("FUEL_L_PUMP2_FAULT_LED", MF_SR1, 8, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_1, "==3"))
-    ledlist.append(Led("FUEL_PUMP1_OFF_LED", MF_SR1, 19, "AirbusFBW/FuelAutoPumpOHPArray", DREF_TYPE.ARRAY_2, "==0"))
-    ledlist.append(Led("FUEL_PUMP1_FAULT_LED", MF_SR1, 18, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_2, "==3"))
-    ledlist.append(Led("FUEL_PUMP2_OFF_LED", MF_SR1, 23, "AirbusFBW/FuelAutoPumpOHPArray", DREF_TYPE.ARRAY_3, "==0"))
-    ledlist.append(Led("FUEL_PUMP2_FAULT_LED", MF_SR1, 22, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_3, "==3"))
-    ledlist.append(Led("FUEL_R_PUMP1_OFF_LED",  MF_SR1, 25, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_4, "==0"))
-    ledlist.append(Led("FUEL_R_PUMP1_FAULT_LED", MF_SR1, 16, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_4, "==3"))
-    ledlist.append(Led("FUEL_R_PUMP2_OFF_LED", MF_SR1, 27, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_5, "==0"))
-    ledlist.append(Led("FUEL_R_PUMP2_FAULT_LED", MF_SR1, 26, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_5, "==3"))
-    ledlist.append(Led("FUEL_MODE_SEL_MAN_LED", MF_SR1, 21, "AirbusFBW/FuelOHPArray", DREF_TYPE.ARRAY_6, "==0"))
-    ledlist.append(Led("FUEL_MODE_SEL_FAULT_LED", MF_SR1, 20, "AirbusFBW/FuelAutoPumpSDArray", DREF_TYPE.ARRAY_6, "==3"))
+    ledlist.append(Led("ADIRS_ON_BAT_LED", MF_SR1, 1, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_12))
+    ledlist.append(Led("GPWS_FLAP3_ON_LED", MF_SR1, 5, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_17))
+    ledlist.append(Led("RCDR_GND_CTL_ON_LED", MF_SR1, 6, "AirbusFBW/OHPLightsATA31_Raw", DREF_TYPE.ARRAY_15))
+    ledlist.append(Led("OXYGEN_CREW_SUPPLY_OFF_LED", MF_SR1, 7, "AirbusFBW/OHPLightsATA35_Raw", DREF_TYPE.ARRAY_1))
+    ledlist.append(Led("ANTIICE_WING_ON_LED", MF_SR2, 13, "AirbusFBW/OHPLightsATA30_Raw", DREF_TYPE.ARRAY_0))
+    ledlist.append(Led("ANTIICE_WING_FAULT_LED", MF_SR2, 12, "AirbusFBW/OHPLightsATA30_Raw", DREF_TYPE.ARRAY_1))
+    ledlist.append(Led("ANTIICE_ENG1_ON_LED", MF_SR2, 15, "AirbusFBW/OHPLightsATA30_Raw", DREF_TYPE.ARRAY_2))
+    ledlist.append(Led("ANTIICE_ENG1_FAULT_LED", MF_SR2, 14, "AirbusFBW/OHPLightsATA30_Raw", DREF_TYPE.ARRAY_3))
+    ledlist.append(Led("ANTIICE_ENG2_ON_LED", MF_SR2, 17, "AirbusFBW/OHPLightsATA30_Raw", DREF_TYPE.ARRAY_4))
+    ledlist.append(Led("ANTIICE_ENG2_FAULT_LED", MF_SR2, 8, "AirbusFBW/OHPLightsATA30_Raw", DREF_TYPE.ARRAY_5))
+    ledlist.append(Led("ELEC_BAT1_OFF_LED", MF_SR1, 28, "AirbusFBW/OHPLightsATA24_Raw", DREF_TYPE.ARRAY_9))
+    ledlist.append(Led("ELEC_BAT1_FAULT_LED", MF_SR1, 29, "AirbusFBW/OHPLightsATA24_Raw", DREF_TYPE.ARRAY_10))
+    ledlist.append(Led("ELEC_BAT2_OFF_LED", MF_SR1, 30, "AirbusFBW/OHPLightsATA24_Raw", DREF_TYPE.ARRAY_11))
+    ledlist.append(Led("ELEC_BAT2_FAULT_LED", MF_SR1, 31, "AirbusFBW/OHPLightsATA24_Raw", DREF_TYPE.ARRAY_12))
+    ledlist.append(Led("ELEC_EXT_PWR_ON_LED",  MF_SR2, 1,"AirbusFBW/OHPLightsATA24_Raw", DREF_TYPE.ARRAY_6))
+    ledlist.append(Led("ELEC_EXT_PWR_AVAIL_LED", MF_SR1, 24, "AirbusFBW/OHPLightsATA24_Raw", DREF_TYPE.ARRAY_7))
+    ledlist.append(Led("FUEL_L_PUMP1_OFF_LED",   MF_SR1, 15, "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_0))
+    ledlist.append(Led("FUEL_L_PUMP1_FAULT_LED", MF_SR1, 14, "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_1))
+    ledlist.append(Led("FUEL_L_PUMP2_OFF_LED",   MF_SR1, 17, "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_2))
+    ledlist.append(Led("FUEL_L_PUMP2_FAULT_LED", MF_SR1, 8,  "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_3))
+    ledlist.append(Led("FUEL_PUMP1_OFF_LED",   MF_SR1, 19, "AirbusFBW/OHPLightsATA28_Raw",DREF_TYPE.ARRAY_4))
+    ledlist.append(Led("FUEL_PUMP1_FAULT_LED", MF_SR1, 18, "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_5))
+    ledlist.append(Led("FUEL_PUMP2_OFF_LED",   MF_SR1, 23, "AirbusFBW/OHPLightsATA28_Raw",DREF_TYPE.ARRAY_6))
+    ledlist.append(Led("FUEL_PUMP2_FAULT_LED", MF_SR1, 22, "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_7))
+    ledlist.append(Led("FUEL_R_PUMP1_OFF_LED",   MF_SR1, 25, "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_8))
+    ledlist.append(Led("FUEL_R_PUMP1_FAULT_LED", MF_SR1, 16, "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_9))
+    ledlist.append(Led("FUEL_R_PUMP2_OFF_LED",   MF_SR1, 27, "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_10))
+    ledlist.append(Led("FUEL_R_PUMP2_FAULT_LED", MF_SR1, 26, "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_11))
+    ledlist.append(Led("FUEL_MODE_SEL_MAN_LED", MF_SR1, 21, "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_12))
+    ledlist.append(Led("FUEL_MODE_SEL_FAULT_LED", MF_SR1, 20, "AirbusFBW/OHPLightsATA28_Raw", DREF_TYPE.ARRAY_13))
     ledlist.append(Led("FIRE_ENG1_ON_LED", MF_SR1, 2, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_11))
     ledlist.append(Led("FIRE_ENG2_ON_LED", MF_SR1, 4, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_13))
-    ledlist.append(Led("FIRE_APU_ON_LED", MF_SR1, 3, "AirbusFBW/FireAgentSwitchAnim", DREF_TYPE.ARRAY_14))
+    ledlist.append(Led("FIRE_APU_ON_LED", MF_SR1, 3, "AirbusFBW/OHPLightsATA26_Raw", DREF_TYPE.ARRAY_20))
     ledlist.append(Led("ADIRS_IR1_ALTN_LED", MF_SR1, 9, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_6))
     ledlist.append(Led("ADIRS_IR1_FAULT_LED", MF_SR1, 0, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_7))
     ledlist.append(Led("ADIRS_IR2_ALTN_LED", MF_SR1, 13, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_8))
     ledlist.append(Led("ADIRS_IR2_FAULT_LED", MF_SR1, 12, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_9))
     ledlist.append(Led("ADIRS_IR3_ALTN_LED", MF_SR1, 11, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_10))
     ledlist.append(Led("ADIRS_IR3_FAULT_LED", MF_SR1, 10, "AirbusFBW/OHPLightsATA34_Raw", DREF_TYPE.ARRAY_11))
-    ledlist.append(Led("APU_GEN_FAULT_LED",  MF_SR2, 2, "AirbusFBW/OHPLightsATA24_Raw", DREF_TYPE.ARRAY_5))
     ledlist.append(Led("EMERGENCY EXIT LIGHT OFF",  MF_SR2, 22, "AirbusFBW/OHPLightsATA31_Raw", DREF_TYPE.ARRAY_12, "==0"))
     ledlist.append(Led("BAT1_VOLTAGE",  MF_SEGMENT1, [16, 56], "AirbusFBW/BatVolts", DREF_TYPE.ARRAY_0, "int(($+0.05)*10)")) # round fist decimal
     ledlist.append(Led("BAT2_VOLTAGE",  MF_SEGMENT1, [2, 7], "AirbusFBW/BatVolts", DREF_TYPE.ARRAY_1, "int(($+0.05)*10)"))
@@ -349,9 +366,9 @@ def create_button_list_a107():
     buttonlist.append(Button("Pack1 Off", MF_MP1, 7, "toliss_airbus/aircondcommands/Pack1Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Pack2 On", MF_MP1, 5, "toliss_airbus/aircondcommands/Pack2On", DREF_TYPE.CMD, BUTTON.SWITCH))
     buttonlist.append(Button("Pack2 Off", MF_MP1, 5, "toliss_airbus/aircondcommands/Pack2Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
-    buttonlist.append(Button("Fire APU", MF_MP2, 0, "sim/electrical/APU_fire_shutoff", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE)) # does not work
-    buttonlist.append(Button("Fire Eng1", MF_MP2, 1, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH_INVERSE))
-    buttonlist.append(Button("Fire Eng2", MF_MP3, 15, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SWITCH_INVERSE))
+    buttonlist.append(Button("Fire APU", MF_MP2, 0, "AirbusFBW/FireExOHPArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH)) #fixed -mrivorey
+    buttonlist.append(Button("Fire Eng1", MF_MP2, 1, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_0, BUTTON.SWITCH))
+    buttonlist.append(Button("Fire Eng2", MF_MP3, 15, "AirbusFBW/ENGFireSwitchArray", DREF_TYPE.ARRAY_1, BUTTON.SWITCH))
     buttonlist.append(Button("Fire Test APU", MF_MP2, 4, "AirbusFBW/FireTestAPU", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Fire Test Eng1", MF_MP2, 5, "AirbusFBW/FireTestENG1", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Fire Test Eng2", MF_MP2, 3, "AirbusFBW/FireTestENG2", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
@@ -381,8 +398,7 @@ def create_button_list_a107():
     buttonlist.append(Button("Bat1 Off", MF_MP2, 15, "toliss_airbus/eleccommands/Bat1Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("Bat2 On", MF_MP2, 14, "toliss_airbus/eleccommands/Bat2On", DREF_TYPE.CMD, BUTTON.SWITCH))
     buttonlist.append(Button("Bat2 Off", MF_MP2, 14, "toliss_airbus/eleccommands/Bat2Off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
-    buttonlist.append(Button("APU Gen On", MF_MP1, 8, "sim/electrical/APU_generator_on", DREF_TYPE.CMD, BUTTON.SWITCH)) # does not work
-    buttonlist.append(Button("APU Gen Off", MF_MP1, 8, "sim/electrical/APU_generator_off", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE)) # does not work
+    buttonlist.append(Button("APU Gen On", MF_MP1, 8, "AirbusFBW/ElecOHPArray", DREF_TYPE.ARRAY_2, BUTTON.SWITCH)) # fixed -mrivorey
     buttonlist.append(Button("IR1", MF_MP1, 13, "sim/flight_controls/brakes_1_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("IR2", MF_MP1, 12, "sim/flight_controls/brakes_2_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
     buttonlist.append(Button("IR3", MF_MP1, 11, "sim/flight_controls/brakes_max_auto", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
@@ -396,7 +412,7 @@ def create_button_list_a107():
     buttonlist.append(Button("Wiper 2", MF_MP4, 14, "AirbusFBW/LeftWiperSwitch", DREF_TYPE.DATA, BUTTON.SWITCH_COMBINED))
     buttonlist.append(Button("Flap 3 Off", MF_MP1, 15, "toliss_airbus/gpwscommands/Flap3Off", DREF_TYPE.CMD, BUTTON.SWITCH))
     buttonlist.append(Button("Flap 3 On", MF_MP1, 15, "toliss_airbus/gpwscommands/Flap3On", DREF_TYPE.CMD, BUTTON.SWITCH_INVERSE))
- 
+
 
 def create_combined_button_list_a107():
     combinedlist.append(Combined("Wiper_combined", ["Wiper 1", "Wiper 2"], [None, 2, 0, 1]))
@@ -715,7 +731,7 @@ class device:
         print("Mobiflight device startet successful")
 
         create_button_list_a107()
-    
+
         startupscreen(mf_dev, device_config, version, new_version)
 
         cyclic_thread = Thread(target=self.cyclic_worker)
