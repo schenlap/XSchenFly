@@ -8,3 +8,5 @@ ATTRS{idVendor}=="4098", ATTRS{idProduct}=="bc1d", GROUP="plugdev", TAG+="uacces
 ATTRS{idVendor}=="4098", ATTRS{idProduct}=="ba01", GROUP="plugdev", TAG+="uaccess"
 # MCDU Captain
 ATTRS{idVendor}=="4098", ATTRS{idProduct}=="bb36", GROUP="plugdev", TAG+="uaccess"
+# Ursar Minor 32 Throttle
+ATTRS{idVendor}=="4098", ATTRS{idProduct}=="b920", GROUP="plugdev", TAG+="uaccess"

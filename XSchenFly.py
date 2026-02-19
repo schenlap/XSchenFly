@@ -5,25 +5,19 @@ VERSION = "v1.4+"
 UDP_IP = "127.0.0.1"
 UDP_PORT = 49000
 
-import binascii
 from dataclasses import dataclass
 from enum import Enum, IntEnum
 import os
 import requests
-import socket
-import struct
-
-#for raw usb
-import re
-import subprocess
 
 from threading import Thread, Event, Lock
 from time import sleep
 
 import hid
 
-import devices.winwing_mcdu
 import devices.winwing_fcu
+import devices.winwing_mcdu
+import devices.winwing_throttle
 import devices.rowsfire_a107
 import XPlaneUdp
 
@@ -69,32 +63,6 @@ class UsbManager:
             raise RuntimeError("Device not found")
 
         print("Device connected.")
-
-    def find_device(self):
-        device_config = 0
-        devlist = [
-            {'vid': 0x4098, 'pid': 0xbb36, 'name': 'MCDU - Captain', 'mask': DEVICEMASK.MCDU | DEVICEMASK.CAP},
-            {'vid': 0x4098, 'pid': 0xbb3e, 'name': 'MCDU - First Offizer', 'mask': DEVICEMASK.MCDU | DEVICEMASK.FO},
-            {'vid': 0x4098, 'pid': 0xbb3a, 'name': 'MCDU - Observer', 'mask': DEVICEMASK.MCDU | DEVICEMASK.OBS},
-            {'vid': 0x4098, 'pid': 0xbb35, 'name': 'PFP 3N - Captain (not tested)', 'mask': DEVICEMASK.PFP3N | DEVICEMASK.CAP},
-            {'vid': 0x4098, 'pid': 0xbb39, 'name': 'PFP 3N - First Officer (not tested)', 'mask': DEVICEMASK.PFP3N | DEVICEMASK.FO},
-            {'vid': 0x4098, 'pid': 0xbb3d, 'name': 'PFP 3N - Observer (not tested)', 'mask': DEVICEMASK.PFP3N | DEVICEMASK.OBS},
-            {'vid': 0x4098, 'pid': 0xbc1d, 'name': 'PFP 4 (not tested)', 'mask': DEVICEMASK.PFP4},
-            {'vid': 0x4098, 'pid': 0xba01, 'name': 'PFP 7 (not tested)', 'mask': DEVICEMASK.PFP7}
-        ]
-        for d in devlist:
-            print(f"now searching for winwing {d['name']} ... ", end='')
-            found = False
-            for dev in hid.enumerate():
-                if dev['vendor_id'] == d['vid'] and dev['product_id'] == d['pid']:
-                    print("found")
-                    self.device_config |= d['mask']
-                    # to force F/O or CAP, uncomment the following line
-                    #self.device_config = DEVICEMASK.MCDU | DEVICEMASK.CAP
-                    #self.device_config = DEVICEMASK.MCDU | DEVICEMASK.FO
-                    return d['vid'], d['pid'], self.device_config
-            print("not found")
-        return None, None, 0
 
 
 def get_latest_release_github():
@@ -142,6 +110,9 @@ def main():
     dev_winwing_fcu = devices.winwing_fcu.device(UDP_IP, UDP_PORT)
     dev_winwing_fcu.init_device(VERSION, new_version)
 
+    dev_winwing_throttle = devices.winwing_throttle.device()
+    dev_winwing_throttle.init_device()
+
     dev_rowsfire_a107 = devices.rowsfire_a107.device(UDP_IP, UDP_PORT)
     dev_rowsfire_a107.init_device(VERSION, new_version)
 
@@ -156,6 +127,7 @@ def main():
                 dev_winwing_mcdu.connected()
                 dev_winwing_fcu.connected()
                 dev_rowsfire_a107.connected()
+                dev_winwing_throttle.connected()
             except XPlaneUdp.XPlaneTimeout:
                 xplane_connected = False
                 sleep(1)
@@ -165,6 +137,7 @@ def main():
             dev_winwing_mcdu.cyclic.set()
             dev_winwing_fcu.cyclic.set()
             dev_rowsfire_a107.cyclic.set()
+            dev_winwing_throttle.cyclic.set()
             values = xp.GetValues()
         except XPlaneUdp.XPlaneTimeout:
             print(f'X-Plane timeout, could not connect on port {xp.BeaconData["Port"]}, waiting for X-Plane')
@@ -172,6 +145,7 @@ def main():
             dev_winwing_mcdu.disconnected()
             dev_winwing_fcu.disconnected()
             dev_rowsfire_a107.disconnected()
+            dev_winwing_throttle.disconnected()
             sleep(2)
 
 if __name__ == '__main__':
