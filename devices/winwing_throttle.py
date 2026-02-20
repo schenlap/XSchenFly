@@ -91,13 +91,40 @@ class Combined:
             return(f"{self.label} -> {self.dataref} {self.truth_table}")
 
 
+class Led:
+    def __init__(self, label, nr, dataref, dreftype = DREF_TYPE.NONE, eval = None):
+        self.label = label
+        self.nr = nr
+        self.dataref = dataref
+        self.dreftype = dreftype
+        self.eval = eval
+
+    def __str__(self):
+        return(f"{self.label} -> {self.dataref}")
+
+
+class Leds(Enum):
+    THROTTLE_BACKLIGHT = 0 # cmd = 0x10, 0 .. 255
+    MARKER_BACKLIGHT = 2 # 0 .. 255
+    ENG1_FAULT = 3
+    ENG1_FIRE = 4
+    ENG2_FAULT = 5
+    ENG2_FIRE = 6
+    MOTOR1 = 0x0e
+    MOTOR2 = 0x0f
+    PACK_32_BACKLIGHT = 100 # cmd = 0x01
+    LCD_BACKLIGHT = 102
+    LCD_DISPLAY = 200
+
 
 values_processed = Event()
 xplane_connected = False
 buttonlist = []
+ledlist = []
 values = []
 buttons_press_event = [0] * BUTTONS_CNT
 buttons_release_event = [0] * BUTTONS_CNT
+display_manager = None
 
 
 def set_datacache(usb_mgr, display_mgr, values):
@@ -205,8 +232,8 @@ def throttle_create_events(xp, usb_mgr, display_mgr):
             print(f'[UM32]  *** continue after usb-in error: {error} ***') # TODO
             sleep(0.5) # TODO remove
             continue
-        #if len(data_in) == 14: # we get this often but don't understand yet. May have someting to do with leds set
-        #    continue
+        if len(data_in) == 64: # we get this often but don't understand yet. May have someting to do with leds set
+            continue
         if len(data_in) != 37:
             print(f'[UM32] rx data count {len(data_in)} not valid for {usb_mgr}')
             continue
@@ -236,12 +263,81 @@ def throttle_create_events(xp, usb_mgr, display_mgr):
         usb_mgr.joystick_proxy.emit(uinput.ABS_Y, th_right, syn=False)
         usb_mgr.joystick_proxy.emit(uinput.ABS_Z, spoiler)
 
+
+def eval_data(value, eval_string):
+    if not eval_string:
+        return value
+    if not "$" in eval_string:
+        s = 'int(value)' + eval_string
+        #print(f"    eval: {s} - {value}")
+        value = eval(s)
+    if "$" in eval_string:
+        s = eval_string
+        s = s.replace("$", "value")
+        #print(f"    eval: {s} - {value}")
+        value = eval(s)
+    return value
+
+
 def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
-    pass
+    global display_manager
+    if data.get("type") != "dataref_update_values":
+        print(f"[UM32] not defined {data}")
+        return
+    for ref_id_str, value in data["data"].items():
+        ref_id = int(ref_id_str)
+        #print(f"[A107] searching for {ref_id}...", end='')
+        if ref_id in led_dataref_ids:
+            ledobj = led_dataref_ids[ref_id]
+
+            if type(value) is list: # dataref array, ledlist array
+                if type(ledobj) != list:
+                    print(f"[UM32] ERROR: led array dataref not registered as list!")
+                    exit()
+                idx = 0
+                for v in value:
+                    for l2 in ledobj: # we received an array, send update to all objects
+                        if idx == l2.dreftype.value - DREF_TYPE.ARRAY_0.value:
+                            value_new = eval_data(value[idx], l2.eval)
+                            #print(f"[A107] array value[{idx}] of {l2.label} = {value_new}")
+                            
+                            display_manager.set_leds(l2.nr, value_new)
+                            #else: # SEGEMENT
+                            #    if value_new != xp.datacache[l2.dataref + '_' + str(idx)]:
+                            #        print(f"[A107] array value[{idx}] of {l2.label} = {value_new}")
+                            #        #rowsfire_a107_set_lcd(l2, value_new)
+                            #xp.datacache[l2.dataref + '_' + str(idx)] = value_new
+
+                    idx += 1
+            elif type(ledobj) == list and type(value) != list: # multiple leds on same dataref (without dataref arry), for eval
+                for l in ledobj:
+                    value_new = eval_data(value, l.eval)
+                    #print(f" found: {l.label} = {value}")
+                    #xp.datacache[ledobj.dataref] = value
+                    if ledobj.nr is not None:
+                        display_manager.set_led(l, value_new)
+            else: # single object (pin or segment)
+                value = eval_data(value, ledobj.eval)
+                print(f" found: {ledobj.label} = {value}")
+                #if "SEGMENT" not in ledobj.mf_name:
+                #    xp.datacache[ledobj.dataref] = value
+                if ledobj.nr is not None:
+                    if ledobj.nr.value < Leds.LCD_DISPLAY.value:
+                        display_manager.set_leds(ledobj.nr, value)
+                    else:
+                        display_manager.set_lcd(value)
+                #else:
+                #    value = int((value + 0.05) * 10) # add first decimal place and round
+                #    if value != xp.datacache[ledobj.dataref]:
+                #        rowsfire_a107_set_lcd(ledobj, value)
+                #xp.datacache[ledobj.dataref] = value
+        else:
+            print(f"[UM32] {ref_id} not found")
 
 
 
 def create_button_list_um32():
+    create_led_list_um32()
     buttonlist.append(Button(0, "ENG1_MASTER_ON", "AirbusFBW/ENG1MasterSwitch", dreftype = DREF_TYPE.DATA, button_type = BUTTON.SEND_1))
     buttonlist.append(Button(1, "ENG1_MASTER_OFF", "AirbusFBW/ENG1MasterSwitch", dreftype = DREF_TYPE.DATA, button_type = BUTTON.SEND_0))
     buttonlist.append(Button(2, "ENG2_MASTER_ON", "AirbusFBW/ENG2MasterSwitch", dreftype = DREF_TYPE.DATA, button_type = BUTTON.SEND_1))
@@ -283,6 +379,13 @@ def create_button_list_um32():
     buttonlist.append(Button(38, "SPOILER_ARM", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
     buttonlist.append(Button(39, "LEFT_THROTTLE_REVERSE_MODE_ON", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
     buttonlist.append(Button(40, "RIGHT_THROTTLE_REVERSE_MODE_ON", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+
+
+def create_led_list_um32():  # TODO check sim/cockpit/electrical/avionics_on == 1
+    ledlist.append(Led("PEDESTAL_BRIGHTNESS", Leds.THROTTLE_BACKLIGHT, "AirbusFBW/PanelBrightnessLevel", DREF_TYPE.DATA, "int($*255)"))
+    ledlist.append(Led("RUD Trim", Leds.LCD_DISPLAY, "sim/flightmodel/controls/rud_trim", DREF_TYPE.DATA, "round($/0.833*25,1)"))
+    ledlist.append(Led("ENG 1 FIRE", Leds.ENG1_FIRE, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_11, "int($)"))
+    ledlist.append(Led("ENG 2 FIRE", Leds.ENG2_FIRE, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_13, "int($)"))
 
 
 class UsbManager:
@@ -353,36 +456,35 @@ class UsbManager:
 
 
 def xplane_get_dataref_ids(xp):
-    if False: # TODO
-        print(f"[A107] getting led dataref ids ... ", end="")
-        for data in [ledlist]:
-            for l in data:
-                if l.dataref == None:
-                    continue
-                if l.dreftype == DREF_TYPE.CMD:
-                    continue
-                xp.datacache[l.dataref] = 0
-                id = xp.dataref_id_fetch(l.dataref)
-                #print(f'name: {l.label}, id: {id}')
-                if id in xp.led_dataref_ids:
-                    continue
-                if l.dreftype.value >= DREF_TYPE.ARRAY_0.value or l.dreftype == DREF_TYPE.DATA_MULTIPLE:
-                    larray = []
-                    idx = 0
-                    for l2 in ledlist:
-                        if l2.dataref == l.dataref:
-                            larray.append(l2)
-                            xp.datacache[l.dataref + '_' + str(idx)] = 0
-                            idx += 1
-                    xp.led_dataref_ids[id] = larray.copy()
-                else:
-                    xp.led_dataref_ids[id] = l
-        print("done")
+    print(f"[A107] getting led dataref ids ... ", end="")
+    for data in [ledlist]:
+        for l in data:
+            if l.dataref == None:
+                continue
+            if l.dreftype == DREF_TYPE.CMD:
+                continue
+            xp.datacache[l.dataref] = 0
+            id = xp.dataref_id_fetch(l.dataref)
+            #print(f'name: {l.label}, id: {id}')
+            if id in xp.led_dataref_ids:
+                continue
+            if l.dreftype.value >= DREF_TYPE.ARRAY_0.value or l.dreftype == DREF_TYPE.DATA_MULTIPLE:
+                larray = []
+                idx = 0
+                for l2 in ledlist:
+                    if l2.dataref == l.dataref:
+                        larray.append(l2)
+                        xp.datacache[l.dataref + '_' + str(idx)] = 0
+                        idx += 1
+                xp.led_dataref_ids[id] = larray.copy()
+            else:
+                xp.led_dataref_ids[id] = l
+    print("done")
     print(f"[A107] getting button cmd & dataref ids ... ", end="")
     for b in buttonlist:
         if b.dataref == None:
             continue
-        if b.dreftype == DREF_TYPE.CMD or b.dreftype == DREF_TYPE.CMD_ONCE:
+        if b.dreftype == DREF_TYPE.CMD or b.dreftype == DREF_TYPE.CMD_SHORT or b.dreftype == DREF_TYPE.CMD_ON:
             id = xp.command_id_fetch(b.dataref)
         elif b.dreftype == DREF_TYPE.DATA or b.dreftype.value >= DREF_TYPE.ARRAY_0.value:
             id = xp.dataref_id_fetch(b.dataref)
@@ -402,47 +504,36 @@ class DisplayManager:
         6: (1,0,1,1,1,1,1), 7: (1,1,1,0,0,0,0), 8: (1,1,1,1,1,1,1),
         9: (1,1,1,1,0,1,1),
     }
-
+    BLANK_SEG = (0, 0, 0, 0, 0, 0, 0)  # all segments off = blank digit
     SLOT_SEG_INDEX = [5, 4, 3, 2, 1, 0]  # slot -> segment: f, e, d, c, b, a
     SIDE_BITS = {'L': [1, 1, 1, 0, 0, 0], 'R': [1, 1, 0, 1, 1, 1]}
-
-    class Leds(Enum):
-        THROTTLE_BACKLIGHT = 0 # cmd = 0x10, 0 .. 255
-        MARKER_BACKLIGHT = 2 # 0 .. 255
-        ENG1_FAULT = 3
-        ENG1_FIRE = 4
-        ENG2_FAULT = 5
-        ENG2_FIRE = 6
-        MOTOR1 = 0x0e
-        MOTOR2 = 0x0f
-        PACK_32_BACKLIGHT = 100 # cmd = 0x01
-        LCD_BACKLIGHT = 102
-
 
 
     def __init__(self, device):
         self.device = device
-
+        self.ledlist = []
+    
+    
     def startupscreen(self, version: str = None, new_version: str = None):
         self.set_backlights(120)
         self.clear()
-        self.send_lcd('L', 0.5)
+        self.set_lcd(-0.5)
 
 
     def set_backlights(self, value : int):
-        self.set_leds([self.Leds.LCD_BACKLIGHT,
-                       self.Leds.PACK_32_BACKLIGHT,
-                       self.Leds.THROTTLE_BACKLIGHT,
-                       self.Leds.MARKER_BACKLIGHT], value)
+        self.set_leds([Leds.LCD_BACKLIGHT,
+                       Leds.PACK_32_BACKLIGHT,
+                       Leds.THROTTLE_BACKLIGHT,
+                       Leds.MARKER_BACKLIGHT], value)
 
 
     def clear(self):
-        self.set_leds([self.Leds.ENG1_FAULT,
-                       self.Leds.ENG1_FIRE,
-                       self.Leds.ENG2_FAULT,
-                       self.Leds.ENG2_FIRE,
-                       self.Leds.MOTOR1,
-                       self.Leds.MOTOR2], 0)
+        self.set_leds([Leds.ENG1_FAULT,
+                       Leds.ENG1_FIRE,
+                       Leds.ENG2_FAULT,
+                       Leds.ENG2_FIRE,
+                       Leds.MOTOR1,
+                       Leds.MOTOR2], 0)
 
 
     def set_leds(self, leds : Leds, brightness : int):
@@ -456,41 +547,50 @@ class DisplayManager:
     def set_led(self, led : Leds, brightness : int):
         cmd = 0x10
         value = led.value
-        if value >= self.Leds.PACK_32_BACKLIGHT.value:
+        if value >= Leds.PACK_32_BACKLIGHT.value:
             cmd = 0x01
-            value -= self.Leds.PACK_32_BACKLIGHT.value
+            value -= Leds.PACK_32_BACKLIGHT.value
 
         data = [0x02, cmd, 0xb9, 0, 0, 3, 0x49, value, brightness, 0,0,0,0,0]
-        print(f"set led {led} in {data}")
-        #if 'data' in locals():
         cmd = bytes(data)
         self.device.write(cmd)
 
 
-    def _calc_lcd_params(self, side, integer, fractional):
-        """Calculate b29 and slots for any digit combination (0-9)."""
-        frac_segs = self.SEVEN_SEG[fractional]  # (a, b, c, d, e, f, g)
-        ones_segs = self.SEVEN_SEG[integer]
-        side_bit = 1 if side == 'R' else 0
-        b29 = (frac_segs[6] << 3) | (ones_segs[6] << 2) | side_bit
+    def _calc_lcd_params(self, side_right : bool, integer, fractional):
+        """
+        Encode LCD value to protocol bytes.
+        """
+        tens = integer // 10
+        ones = integer % 10
 
-        bit0 = self.SIDE_BITS[side]
+        frac_segs = self.SEVEN_SEG[fractional]  # (a, b, c, d, e, f, g)
+        ones_segs = self.SEVEN_SEG[ones]
+        tens_segs = self.SEVEN_SEG[tens] if tens > 0 else self.BLANK_SEG
+
+        side_bit = 1 if side_right else 0
+        b29 = (frac_segs[6] << 3) | (ones_segs[6] << 2) | (tens_segs[6] << 1) | side_bit
+
+        bit0 = self.SIDE_BITS['R' if side_right else 'L']
         slots = []
         for i in range(6):
-            seg = self.SLOT_SEG_INDEX[i]
-            slots.append((frac_segs[seg] << 3) | (ones_segs[seg] << 2) | bit0[i])
+            seg_idx = self.SLOT_SEG_INDEX[i]
+            frac_bit = frac_segs[seg_idx]
+            ones_bit = ones_segs[seg_idx]
+            tens_bit = tens_segs[seg_idx]
+            slot_val = (frac_bit << 3) | (ones_bit << 2) | (tens_bit << 1) | bit0[i]
+            slots.append(slot_val)
 
         return b29, slots
 
 
-    def send_lcd(self, side, value, counter=0):
+    def set_lcd(self, value, counter=0):
         # Usage (integer and fractional both support 0-9):
-        # send_lcd('L', 0.5)  # Display "L 0.5"
-        # send_lcd('R', 1.0)  # Display "R 1.0"
-        # send_lcd('L', 2.3)  # Display "L 2.3"
+        # set_lcd(-0.5)  # Display "L 0.5"
+        # set_lcd(1.0)   # Display "R 1.0"
+        # set_lcd(-2.3)  # Display "L 2.3"
         integer = int(value)
         fractional = int((value - integer) * 10)
-        b29, slots = self._calc_lcd_params(side, integer, fractional)
+        b29, slots = self._calc_lcd_params(value > 0, abs(integer), abs(fractional))
 
         # DATA packet
         data = [0] * 64
@@ -540,8 +640,6 @@ class device:
         print(f"done")
         xplane_connected = True
         xp = self.xp
-        #create_combined_button_list_a107()
-        #mf_dev.force_sync(2)
 
 
     def disconnected(self):
@@ -571,6 +669,7 @@ class device:
     def init_device(self, version: str = None, new_version: str = None):
         global values, xplane_connected
         global device_config
+        global display_manager
 
         self.version = version
         self.new_version = new_version
@@ -586,6 +685,7 @@ class device:
 
         self.display_mgr = DisplayManager(self.usb_mgr.device)
         self.display_mgr.startupscreen(self.version, self.new_version)
+        display_manager = self.display_mgr # very ulgy....
 
         create_button_list_um32()
 

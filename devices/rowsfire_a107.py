@@ -90,10 +90,6 @@ class Combined:
         self.buttons = [None, None]
 
 
-    def __str__(self):
-            return(f"{self.label} -> {self.dataref} {self.truth_table}")
-
-
 class Led:
     def __init__(self, label, mf_name, mf_pin, dataref, dreftype = DREF_TYPE.NONE, eval = None):
         self.label = label
