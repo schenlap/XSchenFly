@@ -11,17 +11,247 @@ import xp_websocket
 
 # sim/cockpit2/controls/speedbrake_ratio	float	y	ratio	This is how much the speebrake HANDLE is deflected, in ratio, where 0.0 is fully retracted, 0.5 is halfway down, and 1.0 is fully down, and -0.5 is speedbrakes ARMED.
 
+BUTTONS_CNT = 42 # TODO
+
 #@unique
 class DEVICEMASK(IntEnum):
     NONE =  0
     THROTTLE =  0x01
 
 
+class BUTTON(Enum):
+    SWITCH = 0
+    TOGGLE = 1
+    TOGGLE_INVERSE = 2
+    SEND_0 = 3
+    SEND_1 = 4
+    SEND_2 = 5
+    SEND_3 = 6
+    SEND_4 = 7
+    SEND_5 = 8
+    HOLD   = 9
+    SEND_1_2 = 10 # 0 -> 1, 1 -> 2
+    SEND_2_1 = 11 # 0 -> 2, 1 -> 1
+    SWITCH_INVERSE = 15
+    SWITCH_COMBINED = 16
+    NONE = 99 # for testing
+
+
+class DREF_TYPE(Enum):
+    DATA = 0
+    CMD = 1
+    NONE = 2 # for testing
+    ARRAY_0 = 10 # element [0]
+    ARRAY_1 = 11 # element [1]
+    ARRAY_2 = 12 # element [2]
+    ARRAY_3 = 13
+    ARRAY_4 = 14
+    ARRAY_5 = 15
+    ARRAY_6 = 16
+    ARRAY_7 = 17
+    ARRAY_8 = 18
+    ARRAY_9 = 19
+    ARRAY_10 = 20
+    ARRAY_11 = 21
+    ARRAY_12 = 22
+    ARRAY_13 = 23
+    ARRAY_14 = 24
+    DATA_MULTIPLE = 25 # more leds use the same dataref
+
+
+class Button:
+    def __init__(self, pin_nr, label, dataref = None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.NONE):
+        self.label = label
+        self.pin_nr = pin_nr
+        self.dataref = dataref
+        self.dreftype = dreftype
+        self.type = button_type
+
+
+    def __str__(self):
+            return(f"{self.label} -> {self.dataref} {self.type}")
+
+
+class Combined:
+    def __init__(self, label, button_names, truth_table):
+        self.label = label
+        self.button_names = button_names
+        self.truth_table = truth_table
+        self.dataref = None
+        self.buttons = [None, None]
+
+
+    def __str__(self):
+            return(f"{self.label} -> {self.dataref} {self.truth_table}")
+
+
+
+values_processed = Event()
+xplane_connected = False
+buttonlist = []
+values = []
+buttons_press_event = [0] * BUTTONS_CNT
+buttons_release_event = [0] * BUTTONS_CNT
+
+
+def set_datacache(usb_mgr, display_mgr, values):
+    pass
+
+
+def xor_bitmask(a, b, bitmask):
+    return (a & bitmask) != (b & bitmask)
+
+
+def um32_button_event(xp):
+    for b in buttonlist:
+        if not any(buttons_press_event) and not any(buttons_release_event):
+            break
+        if b.pin_nr == None:
+            continue
+        if buttons_press_event[b.pin_nr]:
+            buttons_press_event[b.pin_nr] = 0
+            print(f'button {b.label} pressed')
+            continue # TODO
+            if b.type == BUTTON.TOGGLE:
+                val = datacache[b.dataref]
+                if b.dreftype== DREF_TYPE.DATA:
+                    print(f'set dataref {b.dataref} from {bool(val)} to {not bool(val)}')
+                    xp.WriteDataRef(b.dataref, not bool(val))
+                elif b.dreftype== DREF_TYPE.CMD:
+                    print(f'send command {b.dataref}')
+                    xp.SendCommand(b.dataref)
+            elif b.type == BUTTON.SWITCH:
+                val = datacache[b.dataref]
+                if b.dreftype== DREF_TYPE.DATA:
+                    print(f'set dataref {b.dataref} to 1')
+                    xp.WriteDataRef(b.dataref, 1)
+                elif b.dreftype== DREF_TYPE.CMD:
+                    print(f'send command {b.dataref}')
+                    xp.SendCommand(b.dataref)
+            elif b.type == BUTTON.SEND_0:
+                if b.dreftype== DREF_TYPE.DATA:
+                    print(f'set dataref {b.dataref} to 0')
+                    xp.WriteDataRef(b.dataref, 0)
+            elif b.type == BUTTON.SEND_1:
+                if b.dreftype== DREF_TYPE.DATA:
+                    print(f'set dataref {b.dataref} to 1')
+                    xp.WriteDataRef(b.dataref, 1)
+            elif b.type == BUTTON.SEND_2:
+                if b.dreftype== DREF_TYPE.DATA:
+                    print(f'set dataref {b.dataref} to 2')
+                    xp.WriteDataRef(b.dataref, 2)
+            elif b.type == BUTTON.SEND_3:
+                if b.dreftype== DREF_TYPE.DATA:
+                    print(f'set dataref {b.dataref} to 3')
+                    xp.WriteDataRef(b.dataref, 3)
+            elif b.type == BUTTON.SEND_4:
+                if b.dreftype== DREF_TYPE.DATA:
+                    print(f'set dataref {b.dataref} to 4')
+                    xp.WriteDataRef(b.dataref, 4)
+            elif b.type == BUTTON.SEND_5:
+                if b.dreftype== DREF_TYPE.DATA:
+                    print(f'set dataref {b.dataref} to 5')
+                    xp.WriteDataRef(b.dataref, 5)
+            else:
+                print(f'no known button type for button {b.label}')
+        if buttons_release_event[b.pin_nr]:
+            buttons_release_event[b.pin_nr] = 0
+            print(f'button {b.label} released')
+            #if b.type == BUTTON.SWITCH:
+            #    xp.WriteDataRef(b.dataref, 0)
+
+
 def throttle_create_events(xp, usb_mgr, display_mgr):
+    global values
+    sleep(2) # wait for values to be available
+    buttons_last = 0
+    xplane_connected = True # TODO remove
+    while True:
+        if not xplane_connected: # wait for x-plane
+            sleep(1)
+            continue
+
+        set_datacache(usb_mgr, display_mgr, values.copy())
+        values_processed.set()
+        sleep(0.205) # todo 0.005
+        #print('#', end='', flush=True) # TEST1: should print many '#' in console
+        try:
+            data_in = usb_mgr.device.read(0x81, 25)
+        except Exception as error:
+            print(f'[UM32]  *** continue after usb-in error: {error} ***') # TODO
+            sleep(0.5) # TODO remove
+            continue
+        #if len(data_in) == 14: # we get this often but don't understand yet. May have someting to do with leds set
+        #    continue
+        if len(data_in) != 37:
+            print(f'[UM32] rx data count {len(data_in)} not valid for {usb_mgr}')
+            continue
+        #print(f"data_in: {data_in}")
+
+        #create button bit-pattern
+        buttons = 0
+        for i in range(6):
+            buttons |= data_in[i + 1] << (8 * i)
+        #print(hex(buttons)) # TEST2: you should see a difference when pressing buttons
+        for i in range (BUTTONS_CNT):
+            mask = 0x01 << i
+            if xor_bitmask(buttons, buttons_last, mask):
+                #print(f"buttons: {format(buttons, "#04x"):^14}")
+                if buttons & mask:
+                    buttons_press_event[i] = 1
+                else:
+                    buttons_release_event[i] = 1
+                um32_button_event(xp)
+        buttons_last = buttons
     pass
 
 def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
     pass
+
+
+
+def create_button_list_um32():
+    buttonlist.append(Button(0, "ENG1_MASTER_ON", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(1, "ENG1_MASTER_OFF", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(2, "ENG2_MASTER_ON", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(3, "ENG2_MASTER_OFF", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(4, "ENG1_FIRE", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(5, "ENG2_FIRE", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(6, "ENG_MODE_CRANK", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(7, "ENG_MODE_NORM", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(8, "ENG_MODE_START", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(9, "LEFT_THROTTLE_AUTO_TRUST_DISC", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(10, "RIGHT_THROTTLE_AUTO_TRUST_DISC", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(11, "LEFT_THROTTLE_TO/GA", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(12, "LEFT_THROTTLE_FLEX", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(13, "LEFT_THROTTLE_CL", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(14, "LEFT_THROTTLE_IDLE", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(15, "LEFT_THROTTLE_IDLE_REVERSE", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(16, "LEFT_THROTTLE_FULL_REVERSE", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(17, "RIGHT_THROTTLE_TO/GA", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(18, "RIGHT_THROTTLE_FLEX", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(19, "RIGHT_THROTTLE_CL", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(20, "RIGHT_THROTTLE_IDLE", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(21, "RIGHT_THROTTLE_IDLE_REVERSE", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(22, "RIGHT_THROTTLE_FULL_REVERSE", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(23, "ENG_MODE_PUSH_BUTTON", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(24, "TRIM_REST", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(25, "RUDDER_TRIM_L", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(26, "RUDDER_TRIM_NEUTRAL", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(27, "RUDDER_TRIM_R", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(28, "PARKING_BRAKE_OFF", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(29, "PARKING_BRAKE_ON", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(30, "FLAPS_4", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(31, "FLAPS_3", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(32, "FLAPS_2", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(33, "FLAPS_1", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(34, "FLAPS_0", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(35, "SPOILER_FULL", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(36, "SPOILER_ONE_HALF", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(37, "SPOILER_RET", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(38, "SPOILER_ARM", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(39, "LEFT_THROTTLE_REVERSE_MODE_ON", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(40, "RIGHT_THROTTLE_REVERSE_MODE_ON", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
 
 
 class UsbManager:
@@ -255,7 +485,7 @@ class device:
         self.display_mgr = DisplayManager(self.usb_mgr.device)
         self.display_mgr.startupscreen(self.version, self.new_version)
 
-        #create_button_list_mcdu()
+        create_button_list_um32()
 
         usb_event_thread = Thread(target=throttle_create_events, args=[self.xp, self.usb_mgr, self.display_mgr])
         usb_event_thread.start()
