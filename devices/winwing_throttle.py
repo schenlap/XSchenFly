@@ -62,7 +62,9 @@ class DREF_TYPE(Enum):
     ARRAY_13 = 23
     ARRAY_14 = 24
     DATA_MULTIPLE = 26 # more leds use the same dataref
-    CMD_ONCE = 27
+    CMD_SHORT = 27
+    CMD_ON = 28
+    CMD_OFF = 29
 
 
 class Button:
@@ -164,9 +166,12 @@ def um32_button_event():
                 elif b.dreftype== DREF_TYPE.CMD:
                     print(f'send command {b.dataref}')
                     xp.command_activate_duration(xp.buttonref_ids[b])
-                elif b.dreftype== DREF_TYPE.CMD_ONCE:
+                elif b.dreftype== DREF_TYPE.CMD_SHORT:
                     print(f'send command once {b.dataref}')
                     xp.command_activate_duration(xp.buttonref_ids[b], 0.1)
+                elif b.dreftype== DREF_TYPE.CMD_ON:
+                    print(f'send command once {b.dataref}')
+                    xp.command_activate(xp.buttonref_ids[b], 0.1)
             elif b.type == BUTTON.SEND_0:
                 if b.dreftype== DREF_TYPE.DATA:
                     print(f'set dataref {b.dataref} to 0')
@@ -363,9 +368,9 @@ def create_button_list_um32():
     buttonlist.append(Button(22, "RIGHT_THROTTLE_FULL_REVERSE", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
     buttonlist.append(Button(23, "ENG_MODE_PUSH_BUTTON", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
     buttonlist.append(Button(24, "TRIM_REST", "sim/flight_controls/rudder_trim_center", dreftype = DREF_TYPE.CMD, button_type = BUTTON.SWITCH))
-    buttonlist.append(Button(25, "RUDDER_TRIM_L", "sim/flight_controls/rudder_trim_left", dreftype = DREF_TYPE.CMD_ONCE, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(25, "RUDDER_TRIM_L", "sim/flight_controls/rudder_trim_left", dreftype = DREF_TYPE.CMD_SHORT, button_type = BUTTON.SWITCH))
     buttonlist.append(Button(26, "RUDDER_TRIM_NEUTRAL", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
-    buttonlist.append(Button(27, "RUDDER_TRIM_R", "sim/flight_controls/rudder_trim_right", dreftype = DREF_TYPE.CMD_ONCE, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(27, "RUDDER_TRIM_R", "sim/flight_controls/rudder_trim_right", dreftype = DREF_TYPE.CMD_SHORT, button_type = BUTTON.SWITCH))
     buttonlist.append(Button(28, "PARKING_BRAKE_OFF", "AirbusFBW/ParkBrake", dreftype = DREF_TYPE.DATA, button_type = BUTTON.SEND_0))
     buttonlist.append(Button(29, "PARKING_BRAKE_ON", "AirbusFBW/ParkBrake", dreftype = DREF_TYPE.DATA, button_type = BUTTON.SEND_1))
     buttonlist.append(Button(30, "FLAPS_4", "AirbusFBW/FlapLeverRatio", dreftype = DREF_TYPE.DATA, button_type = BUTTON.SEND_1))

@@ -72,6 +72,39 @@ class XP_Websocket:
             print(f"could not send command for id {id}. Errorcode: {xpdr_code_response.status_code}:{xpdr_code_response.text}")
             return None
 
+    def command_activate(self, id, on : bool):
+        asyncio.run(self.async_command_activate(id, on))
+
+    async def async_command_activate(self, id, on : bool):
+        await (self.async_command_activate2(id, on))
+
+    async def async_command_activate2(self, id, on : bool):
+        if type(id) is not int:
+            id = self.command_id_fetch(id)
+
+        async with websockets.connect(self.ws_url, open_timeout=100) as ws: # TODO keep connection open
+            self.ws = ws
+            # Abonnement senden
+            subscribe_msg = {
+                "req_id": self.req_id,
+                "type": "command_set_is_active",
+                "params": {
+                    "commands": [{"id": id,
+                                  "is_active": on != False}
+                                  ]
+                }
+            }
+            print(f"activate command ws: {json.dumps(subscribe_msg)}")
+            await ws.send(json.dumps(subscribe_msg))
+            self.req_id += 1
+
+            # wait for ack
+            ack = await ws.recv()
+            ack_data = json.loads(ack)
+            if not ack_data.get("success", False):
+                print(f"Command fehlgeschlagen: {json.dumps(ack_data)}")
+                return
+
 
     def datarefs_subscribe(self,dataref_list, update_callback = None):
         asyncio.run(self.async_dataref_subscribe(dataref_list, update_callback))
