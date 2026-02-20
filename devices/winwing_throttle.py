@@ -4,8 +4,10 @@ import hid
 
 from threading import Thread, Event, Lock
 from time import sleep
-
 import time
+
+import struct
+import uinput
 
 import xp_websocket
 
@@ -195,7 +197,7 @@ def throttle_create_events(xp, usb_mgr, display_mgr):
 
         set_datacache(usb_mgr, display_mgr, values.copy())
         values_processed.set()
-        sleep(0.205) # todo 0.005
+        sleep(0.01) # todo 0.005
         #print('#', end='', flush=True) # TEST1: should print many '#' in console
         try:
             data_in = usb_mgr.device.read(0x81, 25)
@@ -225,7 +227,14 @@ def throttle_create_events(xp, usb_mgr, display_mgr):
                     buttons_release_event[i] = 1
                 um32_button_event()
         buttons_last = buttons
-    pass
+
+        th_left = struct.unpack('<H', bytes(data_in[13:15]))[0]
+        th_right = struct.unpack('<H', bytes(data_in[15:17]))[0]
+        spoiler = struct.unpack('<H', bytes(data_in[19:21]))[0]
+
+        usb_mgr.joystick_proxy.emit(uinput.ABS_X, th_left, syn=False)
+        usb_mgr.joystick_proxy.emit(uinput.ABS_Y, th_right, syn=False)
+        usb_mgr.joystick_proxy.emit(uinput.ABS_Z, spoiler)
 
 def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
     pass
@@ -280,6 +289,7 @@ class UsbManager:
     def __init__(self):
         self.device = None
         self.device_config = 0
+        self.joystick_proxy = None
 
     def connect_device(self, vid: int, pid: int):
 
@@ -295,6 +305,34 @@ class UsbManager:
             raise RuntimeError("[UM32] Device not found")
 
         print("[UM32] Device connected.")
+
+
+        events = (
+            uinput.ABS_X + (0, 65535, 255, 1024),
+            uinput.ABS_Y + (0, 65535, 255, 1024),
+            uinput.ABS_Z + (0, 65535, 255, 1024),
+            uinput.BTN_JOYSTICK,
+            uinput.BTN_THUMB,
+        )
+        try:
+            self.joystick_proxy = uinput.Device(events, name="XSchenfly Throttle Joystick Proxy", bustype=0x0006,
+                     vendor=0x0001, product=0x0001, version=0x01)
+            print("[UM32] Virtuelles Joystick Device erstellt.")
+        except OSError as e:
+            if e.errno == 19:
+                print("\n[FEHLER] uinput Gerät konnte nicht geöffnet werden.")
+                print("Ursache: Das Kernel-Modul 'uinput' ist nicht geladen")
+                print("oder /dev/uinput existiert nicht.\n")
+
+                print("Lösung:")
+                print("  sudo modprobe uinput")
+
+                print("\nFalls das Problem weiterhin besteht, prüfen:")
+                print("  ls /dev/input/js*")
+                print("  ls -l /dev/uinput")
+                print("  sudo chmod 666 /dev/uinput  (nur zu Testzwecken)")
+            else:
+                raise  # other OSError
 
     def find_device(self):
         device_config = 0
