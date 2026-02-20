@@ -25,7 +25,7 @@ class XP_Websocket:
     def dataref_id_fetch(self, dataref):
         xpdr_code_response = self.xp.get(self.rest_url + "/datarefs", params={"filter[name]": dataref})
         if xpdr_code_response.status_code != 200:
-            print(f"could not get id for {dataref}, Errorcode: {xpdr_code_response.status_code}:{xpdr_code_response.text}")
+            print(f"could not get id for dataref {dataref}, Errorcode: {xpdr_code_response.status_code}:{xpdr_code_response.text}")
             return None
         return xpdr_code_response.json()["data"][0]["id"]
     
@@ -33,17 +33,20 @@ class XP_Websocket:
     def command_id_fetch(self, command):
         xpdr_code_response = self.xp.get(self.rest_url + "/commands", params={"filter[name]": command})
         if xpdr_code_response.status_code != 200:
-            print(f"could not get id for {command}, Errorcode: {xpdr_code_response.status_code}:{xpdr_code_response.text}")
+            print(f"could not get id for command {command}, Errorcode: {xpdr_code_response.status_code}:{xpdr_code_response.text}")
             return None
         return xpdr_code_response.json()["data"][0]["id"]
 
 
-    def dataref_set_value(self, id, value, index = None):
+    def dataref_set_value(self, id, value, index = None, isfloat = False):
         if type(id) is not int:
             id = self.dataref_id_fetch(id)
 
+        if isfloat == False:
+            value = int(value)
+
         set_msg = {
-            "data": int(value)
+            "data": value
         }
         if index != None:
             xpdr_code_response = self.xp.patch(self.rest_url + "/datarefs/" + str(id) + "/value", data=json.dumps(set_msg), params={"index":index})
