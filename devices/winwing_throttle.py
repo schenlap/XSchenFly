@@ -127,6 +127,7 @@ values = []
 buttons_press_event = [0] * BUTTONS_CNT
 buttons_release_event = [0] * BUTTONS_CNT
 display_manager = None
+motor1_old_value = 0
 
 
 def set_datacache(usb_mgr, display_mgr, values):
@@ -286,6 +287,7 @@ def eval_data(value, eval_string):
 
 def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
     global display_manager
+    global motor1_old_value
     if data.get("type") != "dataref_update_values":
         print(f"[UM32] not defined {data}")
         return
@@ -328,7 +330,12 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                 #    xp.datacache[ledobj.dataref] = value
                 if ledobj.nr is not None:
                     if ledobj.nr.value < Leds.LCD_DISPLAY.value:
-                        display_manager.set_leds(ledobj.nr, value)
+                        if ledobj.nr == Leds.MOTOR1: # only set on change
+                            if value != motor1_old_value:
+                                motor1_old_value = value
+                                display_manager.set_leds(ledobj.nr, value)
+                        else:
+                            display_manager.set_leds(ledobj.nr, value)
                     else:
                         display_manager.set_lcd(value)
                 #else:
@@ -391,6 +398,8 @@ def create_led_list_um32():  # TODO check sim/cockpit/electrical/avionics_on == 
     ledlist.append(Led("RUD Trim", Leds.LCD_DISPLAY, "sim/flightmodel/controls/rud_trim", DREF_TYPE.DATA, "round($/0.833*25,1)"))
     ledlist.append(Led("ENG 1 FIRE", Leds.ENG1_FIRE, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_11, "int($)"))
     ledlist.append(Led("ENG 2 FIRE", Leds.ENG2_FIRE, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_13, "int($)"))
+    #ledlist.append(Led("FORCES", Leds.MOTOR1, "sim/flightmodel2/gear/on_noisy", DREF_TYPE.ARRAY_0, "$*20"))
+    ledlist.append(Led("FORCES", Leds.MOTOR1, "AirbusFBW/ENGTLASettingEPR", DREF_TYPE.ARRAY_0, "int($>1.35)*200"))
 
 
 class UsbManager:
