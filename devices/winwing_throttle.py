@@ -330,12 +330,7 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                 #    xp.datacache[ledobj.dataref] = value
                 if ledobj.nr is not None:
                     if ledobj.nr.value < Leds.LCD_DISPLAY.value:
-                        if ledobj.nr == Leds.MOTOR1: # only set on change
-                            if value != motor1_old_value:
-                                motor1_old_value = value
-                                display_manager.set_leds(ledobj.nr, value)
-                        else:
-                            display_manager.set_leds(ledobj.nr, value)
+                        display_manager.set_leds(ledobj.nr, value)
                     else:
                         display_manager.set_lcd(value)
                 #else:
@@ -399,7 +394,7 @@ def create_led_list_um32():  # TODO check sim/cockpit/electrical/avionics_on == 
     ledlist.append(Led("ENG 1 FIRE", Leds.ENG1_FIRE, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_11, "int($)"))
     ledlist.append(Led("ENG 2 FIRE", Leds.ENG2_FIRE, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_13, "int($)"))
     #ledlist.append(Led("FORCES", Leds.MOTOR1, "sim/flightmodel2/gear/on_noisy", DREF_TYPE.ARRAY_0, "$*20"))
-    ledlist.append(Led("FORCES", Leds.MOTOR1, "AirbusFBW/ENGTLASettingEPR", DREF_TYPE.ARRAY_0, "int($>1.35)*200"))
+    ledlist.append(Led("FORCES", Leds.MOTOR1, "AirbusFBW/ENGTLASettingEPR", DREF_TYPE.ARRAY_0, "int(int($>1.30)*($-1.30)*10*200)")) #
 
 
 class UsbManager:
@@ -559,8 +554,20 @@ class DisplayManager:
 
 
     def set_led(self, led : Leds, brightness : int):
+        global motor1_old_value
+
+        if brightness > 255:
+            brightness = 255
+
+        if led == Leds.MOTOR1: # dirty fast hack :-)
+            if brightness != motor1_old_value:
+                motor1_old_value = brightness
+            else:
+                return
+
         cmd = 0x10
         value = led.value
+
         if value >= Leds.PACK_32_BACKLIGHT.value:
             cmd = 0x01
             value -= Leds.PACK_32_BACKLIGHT.value
