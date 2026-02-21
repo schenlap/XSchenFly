@@ -25,6 +25,11 @@ Supported Hardware:
  * Winwing FCU: fully supported
  * Winwing EFIS-R: fully supported
  * Winwing EFIS-L: fully supported
+ * Winwing Uras Minor 32 Throllte with flaps and speedbrakes
+  * only testes on linux. may not work in mac and widnwos because of virtual joysticks!
+  * Throttle without speedbrake and flaps is untested
+  * Throttle and speedbrakes axis must be configured in X-Plane
+  * Fire 1 & 2 and rudder trim push button can be configured as buttons in X-Plane
  * Wingflex RMP: is on todo list
 
 ![A107 image](./documentation/A107.png)
@@ -81,10 +86,11 @@ because it does not know which serial number it should use.
 2. Change `MOBIFLIGHT_SERIAL = "SN-XXX-XXX"` in devices/rawsfire_a107.py to `MOBIFLIGHT_SERIAL = "SN-08B-DB1"` (use your serial that was printed under `Not using mobiflight device SN-08B-DB1`)
 
 ### Configuration of Ursa Minor 32 Throttle
-1. for throttle and speedbrake a virtual joystick is created. Configure this XSchenfly-Stick in X-Plane
+1. No not calibrate your device in simapp pro
+2. for throttle and speedbrake a virtual joystick is created. Configure this XSchenfly-Stick in X-Plane <br>
 ![configure joystick in x-plane](./documentation/throttle_joystick_config.png)
-2. calibrate joystick in X-Plane (move all up/down)
-3. calibrate axis in toliss (to use reversers and set correct dents)
+3. calibrate joystick in X-Plane (move all up/down)
+4. calibrate axis in toliss (to use reversers and set correct dents) <br>
 ![configure joystick in toliss](./documentation/toliss_throttle_calibration.png)
 
 ## Use
