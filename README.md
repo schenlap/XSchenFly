@@ -26,10 +26,10 @@ Supported Hardware:
  * Winwing EFIS-R: fully supported
  * Winwing EFIS-L: fully supported
  * Winwing Uras Minor 32 Throllte with flaps and speedbrakes
-  * only testes on linux. may not work in mac and widnwos because of virtual joysticks!
-  * Throttle without speedbrake and flaps is untested
-  * Throttle and speedbrakes axis must be configured in X-Plane
-  * Fire 1 & 2 and rudder trim push button can be configured as buttons in X-Plane
+   * only testes on linux. may not work in mac and widnwos because of virtual joysticks!
+    * Throttle without speedbrake and flaps is untested
+    * Throttle and speedbrakes axis must be configured in X-Plane
+    * Fire 1 & 2 and rudder trim push button can be configured as buttons in X-Plane
  * Wingflex RMP: is on todo list
 
 ![A107 image](./documentation/A107.png)
