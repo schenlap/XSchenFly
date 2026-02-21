@@ -11,8 +11,6 @@ import uinput
 
 import xp_websocket
 
-# sim/cockpit2/controls/speedbrake_ratio	float	y	ratio	This is how much the speebrake HANDLE is deflected, in ratio, where 0.0 is fully retracted, 0.5 is halfway down, and 1.0 is fully down, and -0.5 is speedbrakes ARMED.
-
 BUTTONS_CNT = 42 # TODO
 
 #@unique
@@ -309,37 +307,25 @@ def xplane_ws_listener(data, led_dataref_ids): # receive ids and find led
                     for l2 in ledobj: # we received an array, send update to all objects
                         if idx == l2.dreftype.value - DREF_TYPE.ARRAY_0.value:
                             value_new = eval_data(value[idx], l2.eval)
-                            #print(f"[A107] array value[{idx}] of {l2.label} = {value_new}")
                             display_manager.set_leds(l2.nr, value_new)
-                            #else: # SEGEMENT
-                            #    if value_new != xp.datacache[l2.dataref + '_' + str(idx)]:
-                            #        print(f"[A107] array value[{idx}] of {l2.label} = {value_new}")
-                            #        #rowsfire_a107_set_lcd(l2, value_new)
-                            #xp.datacache[l2.dataref + '_' + str(idx)] = value_new
 
                     idx += 1
             elif type(ledobj) == list and type(value) != list: # multiple leds on same dataref (without dataref arry), for eval
                 for l in ledobj:
                     value_new = eval_data(value, l.eval)
-                    #print(f" found: {l.label} = {value}")
+                    print(f" found: {l.label} = {value_new}")
                     #xp.datacache[ledobj.dataref] = value
-                    if ledobj.nr is not None:
-                        display_manager.set_led(l, value_new)
+                    if l.nr is not None:
+                        display_manager.set_led(l.nr, value_new)
             else: # single object (pin or segment)
                 value = eval_data(value, ledobj.eval)
                 print(f" found: {ledobj.label} = {value}")
-                #if "SEGMENT" not in ledobj.mf_name:
-                #    xp.datacache[ledobj.dataref] = value
+
                 if ledobj.nr is not None:
                     if ledobj.nr.value < Leds.LCD_DISPLAY.value:
                         display_manager.set_leds(ledobj.nr, value)
                     else:
                         display_manager.set_lcd(value)
-                #else:
-                #    value = int((value + 0.05) * 10) # add first decimal place and round
-                #    if value != xp.datacache[ledobj.dataref]:
-                #        rowsfire_a107_set_lcd(ledobj, value)
-                #xp.datacache[ledobj.dataref] = value
         else:
             print(f"[UM32] {ref_id} not found")
 
@@ -391,13 +377,15 @@ def create_button_list_um32():
 
 
 def create_led_list_um32():  # TODO check sim/cockpit/electrical/avionics_on == 1
-    ledlist.append(Led("PEDESTAL_BRIGHTNESS", Leds.THROTTLE_BACKLIGHT, "AirbusFBW/PanelBrightnessLevel", DREF_TYPE.DATA, "int($*255)"))
+    ledlist.append(Led("PEDESTAL_BRIGHTNESS", Leds.LCD_BACKLIGHT, "AirbusFBW/PanelBrightnessLevel", DREF_TYPE.DATA_MULTIPLE, "int($*255)"))
+    ledlist.append(Led("PEDESTAL_BRIGHTNESS", Leds.PACK_32_BACKLIGHT, "AirbusFBW/PanelBrightnessLevel", DREF_TYPE.DATA_MULTIPLE, "max(int($*150), 15) if $ > 0 else 0"))
+    ledlist.append(Led("PEDESTAL_BRIGHTNESS", Leds.THROTTLE_BACKLIGHT, "AirbusFBW/PanelBrightnessLevel", DREF_TYPE.DATA_MULTIPLE, "int($*255)"))
+    ledlist.append(Led("PEDESTAL_BRIGHTNESS", Leds.MARKER_BACKLIGHT, "AirbusFBW/PanelBrightnessLevel", DREF_TYPE.DATA_MULTIPLE, "int($*255)"))
     ledlist.append(Led("RUD Trim", Leds.LCD_DISPLAY, "sim/flightmodel/controls/rud_trim", DREF_TYPE.DATA, "round($/0.833*25,1)"))
     ledlist.append(Led("ENG 1 FIRE", Leds.ENG1_FIRE, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_11, "int($)"))
     ledlist.append(Led("ENG 2 FIRE", Leds.ENG2_FIRE, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_13, "int($)"))
     #ledlist.append(Led("FORCES", Leds.MOTOR1, "sim/flightmodel2/gear/on_noisy", DREF_TYPE.ARRAY_0, "$*20"))
-    ledlist.append(Led("FORCES", Leds.MOTOR1, "AirbusFBW/ENGTLASettingEPR", DREF_TYPE.ARRAY_0, "int(int($>1.30)*($-1.30)*10*200)")) #
-
+    ledlist.append(Led("FORCES", Leds.MOTOR1, "AirbusFBW/ENGTLASettingEPR", DREF_TYPE.ARRAY_0, "int(int($>1.30)*($-1.30)*10*200)"))
 
 class UsbManager:
     def __init__(self):
