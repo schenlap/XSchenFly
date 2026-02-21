@@ -20,6 +20,7 @@ class XP_Websocket:
         self.req_id = 0
         self.ws = None
         self.datacache = {}
+        self._lock = asyncio.Lock()
 
 
     def dataref_id_fetch(self, dataref):
@@ -82,28 +83,19 @@ class XP_Websocket:
         if type(id) is not int:
             id = self.command_id_fetch(id)
 
-        async with websockets.connect(self.ws_url, open_timeout=100) as ws: # TODO keep connection open
-            self.ws = ws
-            # Abonnement senden
-            subscribe_msg = {
-                "req_id": self.req_id,
-                "type": "command_set_is_active",
-                "params": {
-                    "commands": [{"id": id,
-                                  "is_active": on != False}
-                                  ]
-                }
+        command_msg = {
+            "req_id": self.req_id,
+            "type": "command_set_is_active",
+            "params": {
+                "commands": [{"id": id,
+                                "is_active": bool(on)}
+                                ]
             }
-            print(f"activate command ws: {json.dumps(subscribe_msg)}")
-            await ws.send(json.dumps(subscribe_msg))
+        }
+        async with self._lock:
+            await self.ws.send(json.dumps(command_msg))
+            #print(f"activate command ws: {json.dumps(command_msg)} sent")
             self.req_id += 1
-
-            # wait for ack
-            ack = await ws.recv()
-            ack_data = json.loads(ack)
-            if not ack_data.get("success", False):
-                print(f"Command fehlgeschlagen: {json.dumps(ack_data)}")
-                return
 
 
     def datarefs_subscribe(self,dataref_list, update_callback = None):
@@ -123,11 +115,12 @@ class XP_Websocket:
                 "type": "dataref_subscribe_values",
                 "params": {
                     "datarefs": [{"id": ref_id} for ref_id in dataref_list]
-                    #"commands": [{"id": ref_id_cmd} for ref_id_cmd in buttonref_ids]
                 }
             }
-            await ws.send(json.dumps(subscribe_msg))
-            self.req_id += 1
+
+            async with self._lock:
+                await ws.send(json.dumps(subscribe_msg))
+                self.req_id += 1
 
             # wait for ack
             ack = await ws.recv()
@@ -142,7 +135,7 @@ class XP_Websocket:
                     msg = await ws.recv()
                     data = json.loads(msg)
                 except Exception as e:
-                    print(f"[A107] Fehler im Listener: {e}")
+                    print(f"[WP_Websocket] Fehler im Listener: {e}")
                     break
                 if update_callback:
                     update_callback(data, dataref_list)
