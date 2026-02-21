@@ -134,7 +134,7 @@ def xor_bitmask(a, b, bitmask):
     return (a & bitmask) != (b & bitmask)
 
 
-def um32_button_event():
+def um32_button_event(usb_mgr):
     global xp
     for b in buttonlist:
         if not any(buttons_press_event) and not any(buttons_release_event):
@@ -145,6 +145,12 @@ def um32_button_event():
             buttons_press_event[b.pin_nr] = 0
             print(f'button {b.label} pressed')
             if not b.dataref:
+                if b.label == "ENG1_FIRE":
+                    usb_mgr.joystick_proxy.emit(uinput.BTN_THUMBL, 1)
+                if b.label == "ENG2_FIRE":
+                    usb_mgr.joystick_proxy.emit(uinput.BTN_THUMBR, 1)
+                if b.label == "ENG_MODE_PUSH_BUTTON":
+                    usb_mgr.joystick_proxy.emit(uinput.BTN_JOYSTICK, 1)
                 continue
             #continue # TODO
             if b.type == BUTTON.TOGGLE:
@@ -208,6 +214,14 @@ def um32_button_event():
         if buttons_release_event[b.pin_nr]:
             buttons_release_event[b.pin_nr] = 0
             print(f'button {b.label} released')
+            if not b.dataref:
+                if b.label == "ENG1_FIRE":
+                    usb_mgr.joystick_proxy.emit(uinput.BTN_THUMBL, 0)
+                if b.label == "ENG2_FIRE":
+                    usb_mgr.joystick_proxy.emit(uinput.BTN_THUMBR, 0)
+                if b.label == "ENG_MODE_PUSH_BUTTON":
+                    usb_mgr.joystick_proxy.emit(uinput.BTN_JOYSTICK, 0)
+                continue
             if b.type == BUTTON.SWITCH and b.dataref and b.dreftype == DREF_TYPE.DATA:
                 xp.dataref_set_value(b.dataref, 0)
             if b.type == BUTTON.TOGGLE:
@@ -255,7 +269,7 @@ def throttle_create_events(xp, usb_mgr, display_mgr):
                     buttons_press_event[i] = 1
                 else:
                     buttons_release_event[i] = 1
-                um32_button_event()
+                um32_button_event(usb_mgr)
         buttons_last = buttons
 
         th_left = struct.unpack('<H', bytes(data_in[13:15]))[0]
@@ -414,7 +428,8 @@ class UsbManager:
             uinput.ABS_Y + (0, 65535, 255, 1024),
             uinput.ABS_Z + (0, 65535, 255, 1024),
             uinput.BTN_JOYSTICK,
-            uinput.BTN_THUMB,
+            uinput.BTN_THUMBL,
+            uinput.BTN_THUMBR,
         )
         try:
             self.joystick_proxy = uinput.Device(events, name="XSchenfly Throttle Joystick Proxy", bustype=0x0006,
