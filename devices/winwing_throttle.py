@@ -160,7 +160,7 @@ def um32_button_event(usb_mgr):
                     xp.dataref_set_value(b.dataref, not bool(val))
                 elif b.dreftype== DREF_TYPE.CMD_SHORT:
                     print(f'send command {b.dataref}')
-                    xp.command_activate_duration(b.dataref)
+                    xp.command_activate_duration(b.dataref, 0.1)
                 elif b.dreftype== DREF_TYPE.CMD_ON_OFF:
                     xp.command_activate(b.dataref, 1)
             elif b.type == BUTTON.SWITCH:
@@ -170,7 +170,7 @@ def um32_button_event(usb_mgr):
                     xp.dataref_set_value(xp.buttonref_ids[b], 1)
                 elif b.dreftype== DREF_TYPE.CMD_SHORT:
                     print(f'send command once {b.dataref}')
-                    xp.command_activate_duration(xp.buttonref_ids[b], 0.1)
+                    xp.command_activate_duration(xp.buttonref_ids[b], 0.5)
                 elif b.dreftype== DREF_TYPE.CMD_ON_OFF:
                     print(f'send command ON_OFF with type SWITCH is not supported for {b.dataref}')
             elif b.type == BUTTON.SEND_0:
@@ -276,9 +276,9 @@ def throttle_create_events(xp, usb_mgr, display_mgr):
         th_right = struct.unpack('<H', bytes(data_in[15:17]))[0]
         spoiler = struct.unpack('<H', bytes(data_in[19:21]))[0]
 
-        usb_mgr.joystick_proxy.emit(uinput.ABS_X, th_left, syn=False)
-        usb_mgr.joystick_proxy.emit(uinput.ABS_Y, th_right, syn=False)
-        usb_mgr.joystick_proxy.emit(uinput.ABS_Z, spoiler)
+        usb_mgr.joystick_proxy.emit(uinput.ABS_X, th_left, syn=False) # Throttle left
+        usb_mgr.joystick_proxy.emit(uinput.ABS_Y, th_right, syn=False) # Throttle right
+        usb_mgr.joystick_proxy.emit(uinput.ABS_Z, spoiler) # Spoiler
 
 
 def eval_data(value, eval_string):
@@ -385,7 +385,7 @@ def create_button_list_um32():
     buttonlist.append(Button(35, "SPOILER_FULL", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
     buttonlist.append(Button(36, "SPOILER_ONE_HALF", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
     buttonlist.append(Button(37, "SPOILER_RET", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
-    buttonlist.append(Button(38, "SPOILER_ARM", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
+    buttonlist.append(Button(38, "SPOILER_ARM", "toliss_airbus/speedbrake/hold_armed", dreftype = DREF_TYPE.CMD_SHORT, button_type = BUTTON.SWITCH))
     buttonlist.append(Button(39, "LEFT_THROTTLE_REVERSE_MODE_ON", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
     buttonlist.append(Button(40, "RIGHT_THROTTLE_REVERSE_MODE_ON", None, dreftype = DREF_TYPE.DATA, button_type = BUTTON.SWITCH))
 
@@ -399,7 +399,7 @@ def create_led_list_um32():  # TODO check sim/cockpit/electrical/avionics_on == 
     ledlist.append(Led("ENG 1 FIRE", Leds.ENG1_FIRE, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_11, "int($)"))
     ledlist.append(Led("ENG 2 FIRE", Leds.ENG2_FIRE, "AirbusFBW/OHPLightsATA70_Raw", DREF_TYPE.ARRAY_13, "int($)"))
     #ledlist.append(Led("FORCES", Leds.MOTOR1, "sim/flightmodel2/gear/on_noisy", DREF_TYPE.ARRAY_0, "$*20"))
-    ledlist.append(Led("FORCES", Leds.MOTOR1, "AirbusFBW/ENGTLASettingEPR", DREF_TYPE.ARRAY_0, "int(int($>1.30)*($-1.30)*10*200)"))
+    #ledlist.append(Led("FORCES", Leds.MOTOR1, "AirbusFBW/ENGTLASettingEPR", DREF_TYPE.ARRAY_0, "int(int($>1.30)*($-1.30)*10*200)"))
 
 class UsbManager:
     def __init__(self):
