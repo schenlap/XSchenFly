@@ -15,6 +15,7 @@ from time import sleep
 
 import hid
 
+import devices.winctrl_agp
 import devices.winwing_fcu
 import devices.winwing_mcdu
 import devices.winwing_throttle
@@ -105,6 +106,9 @@ def main():
     xp.UDP_PORT = xp.BeaconData["Port"]
     print(f'waiting for X-Plane to connect on port {xp.BeaconData["Port"]}')
 
+    dev_winctrl_agp = devices.winctrl_agp.device()
+    dev_winctrl_agp.init_device()
+
     dev_winwing_mcdu = devices.winwing_mcdu.device(UDP_IP, UDP_PORT)
     dev_winwing_mcdu.init_device(VERSION, new_version)
 
@@ -128,6 +132,7 @@ def main():
 
                 print(f"X-Plane connected")
                 xplane_connected = True
+                dev_winctrl_agp.connected()
                 dev_winwing_mcdu.connected()
                 dev_winwing_fcu.connected()
                 dev_rowsfire_a107.connected()
@@ -139,6 +144,7 @@ def main():
             continue
 
         try:
+            dev_winctrl_agp.cyclic.set()
             dev_winwing_mcdu.cyclic.set()
             dev_winwing_fcu.cyclic.set()
             dev_rowsfire_a107.cyclic.set()
@@ -148,6 +154,7 @@ def main():
         except XPlaneUdp.XPlaneTimeout:
             print(f'X-Plane timeout, could not connect on port {xp.BeaconData["Port"]}, waiting for X-Plane')
             xplane_connected = False
+            dev_winctrl_agp.disconnected()
             dev_winwing_mcdu.disconnected()
             dev_winwing_fcu.disconnected()
             dev_rowsfire_a107.disconnected()

@@ -12,3 +12,5 @@ ATTRS{idVendor}=="4098", ATTRS{idProduct}=="bb36", GROUP="plugdev", TAG+="uacces
 ATTRS{idVendor}=="4098", ATTRS{idProduct}=="b920", GROUP="plugdev", TAG+="uaccess"
 # ECAM
 ATTRS{idVendor}=="4098", ATTRS{idProduct}=="bb70", GROUP="plugdev", TAG+="uaccess"
+# AGP
+ATTRS{idVendor}=="4098", ATTRS{idProduct}=="bb80", GROUP="plugdev", TAG+="uaccess"
