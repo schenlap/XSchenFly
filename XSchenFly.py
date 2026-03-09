@@ -18,6 +18,7 @@ import hid
 import devices.winwing_fcu
 import devices.winwing_mcdu
 import devices.winwing_throttle
+import devices.winctrl_ecam
 import devices.rowsfire_a107
 import XPlaneUdp
 
@@ -113,6 +114,9 @@ def main():
     dev_winwing_throttle = devices.winwing_throttle.device()
     dev_winwing_throttle.init_device()
 
+    dev_winctrl_ecam = devices.winctrl_ecam.device()
+    dev_winctrl_ecam.init_device()
+
     dev_rowsfire_a107 = devices.rowsfire_a107.device(UDP_IP, UDP_PORT)
     dev_rowsfire_a107.init_device(VERSION, new_version)
 
@@ -128,6 +132,7 @@ def main():
                 dev_winwing_fcu.connected()
                 dev_rowsfire_a107.connected()
                 dev_winwing_throttle.connected()
+                dev_winctrl_ecam.connected()
             except XPlaneUdp.XPlaneTimeout:
                 xplane_connected = False
                 sleep(1)
@@ -138,6 +143,7 @@ def main():
             dev_winwing_fcu.cyclic.set()
             dev_rowsfire_a107.cyclic.set()
             dev_winwing_throttle.cyclic.set()
+            dev_winctrl_ecam.cyclic.set()
             values = xp.GetValues()
         except XPlaneUdp.XPlaneTimeout:
             print(f'X-Plane timeout, could not connect on port {xp.BeaconData["Port"]}, waiting for X-Plane')
@@ -146,6 +152,7 @@ def main():
             dev_winwing_fcu.disconnected()
             dev_rowsfire_a107.disconnected()
             dev_winwing_throttle.disconnected()
+            dev_winctrl_ecam.disconnected()
             sleep(2)
 
 if __name__ == '__main__':
