@@ -30,6 +30,8 @@ Supported Hardware:
     * Throttle without speedbrake and flaps is untested
     * Throttle and speedbrakes axis must be configured in X-Plane
     * Fire 1 & 2 and rudder trim push button can be configured as buttons in X-Plane
+ * Winctrl 32 APG: fully supported
+ * Winctrl 32 ECAM: fully supported
  * Wingflex RMP: is on todo list
 
 ![A107 image](./documentation/A107.png)
