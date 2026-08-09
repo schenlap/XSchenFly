@@ -638,10 +638,13 @@ def agp32_create_events(xp, usb_mgr, display_mgr):
 class device:
     def __init__(self, UDP_IP=None, UDP_PORT=None):
         self.usb_mgr = None
+        self.display_mgr = None
         self.cyclic = Event()
         self.xp = xp_websocket.XP_Websocket()
 
     def connected(self):
+        if self.display_mgr is None:
+            return False
         global xplane_connected
         global xp
         print("[AGP32] X-Plane connected")
