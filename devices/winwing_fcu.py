@@ -3,6 +3,7 @@ from enum import Enum, IntEnum
 
 from threading import Thread, Event, Lock
 from time import sleep
+import time
 
 import hid
 
@@ -354,7 +355,14 @@ def winwing_efisl_set_lcd(device, baro):
     pkg_nr = 1
 
 #                                                              alwa  unknown3   chksum    unknown4 nown5  cmd2    ZZZEEEERRROoooo                  seg 1    2     3     4
-    data = [0xf0, 0x0, pkg_nr, 0x1a, 0x0d, 0xbf, 0x0, 0x0, 0x2, 0x1, 0x0, 0x0, 0xff, 0xff, 0x1d, 0x0, 0x0, 0x9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, b[3], b[2] | bl[Byte.EFISL_B2.value], b[1], b[0], bl[Byte.EFISL_B0.value], 0x0e, 0xbf, 0x0, 0x0, 0x3, 0x1, 0x0, 0x0, 0x4c, 0xc, 0x1d, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]
+    # local fix (framing as MobiFlight WinCtrlMessageSender/WinCtrlEfisController): length 0x2b = set (26) +
+    # refresh (17) block, both addressed to EFIS-L (0x0d 0xbf) with the same 3-byte transaction id
+    tid = [0xff, 0xff, 0x1d]
+    data = [0xf0, 0x0, pkg_nr, 0x2b,
+            0x0d, 0xbf, 0x0, 0x0, 0x2, 0x1, 0x0, 0x0, *tid, 0x0, 0x0, 0x9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+            b[3], b[2] | bl[Byte.EFISL_B2.value], b[1], b[0], bl[Byte.EFISL_B0.value],
+            0x0d, 0xbf, 0x0, 0x0, 0x3, 0x1, 0x0, 0x0, *tid, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]
+    data += [0x0] * (64 - len(data))
 
     cmd = bytes(data)
     try:
@@ -388,8 +396,8 @@ datarefs = [
     ("sim/cockpit/autopilot/vertical_velocity", 5),
     ("sim/cockpit2/autopilot/fpa", 2),
     ("AirbusFBW/APVerticalMode", 5), # EXPED light on for vsmode >= 112
-    ("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_copilot", 2),
-    ("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot", 2),
+    ("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_copilot", 5), # local: 2 -> 5 Hz like heading
+    ("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot", 5), # local: 2 -> 5 Hz like heading
     ("AirbusFBW/BaroStdFO", 2),
     ("AirbusFBW/BaroUnitFO", 2),
     ("AirbusFBW/BaroStdCapt", 2),
@@ -539,6 +547,41 @@ def xor_bitmask(a, b, bitmask):
     return (a & bitmask) != (b & bitmask)
 
 
+# local fix: X-Plane's barometer_up/down commands step 0.01 inHg (~1/3 hPa), so in hPa mode one knob click did
+# not match one QNH step. In hPa mode the click now writes the baro dataref to the next whole hPa value instead
+# (current displayed hPa +/- 1). Fast clicks build on the last written target, because the value read back from
+# X-Plane lags. inHg mode keeps the original command (0.01 inHg per click).
+BARO_KNOBS = {
+    "L_PRESS INC": (1, "AirbusFBW/BaroUnitCapt", "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot"),
+    "L_PRESS DEC": (-1, "AirbusFBW/BaroUnitCapt", "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot"),
+    "R_PRESS INC": (1, "AirbusFBW/BaroUnitFO", "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_copilot"),
+    "R_PRESS DEC": (-1, "AirbusFBW/BaroUnitFO", "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_copilot"),
+}
+HPA_PER_INHG = 33.86388
+baro_target = {}  # baro dataref -> (target hPa, time of the write)
+
+
+def baro_hpa_click(xp, label):
+    """Returns True if the click was handled as a whole-hPa step."""
+    if label not in BARO_KNOBS:
+        return False
+    direction, unit_ref, baro_ref = BARO_KNOBS[label]
+    unit, inhg100 = datacache.get(unit_ref), datacache.get(baro_ref)  # baro is cached as inHg * 100
+    if not unit or not inhg100:  # inHg mode (or no value yet)
+        return False
+    now = time.monotonic()
+    last = baro_target.get(baro_ref)
+    if last and now - last[1] < 1.0:
+        base = last[0]
+    else:
+        base = int((inhg100 * HPA_PER_INHG + 50) / 100)  # same rounding as the EFIS display
+    target = base + direction
+    print(f'set dataref {baro_ref} to {target} hPa')
+    xp.WriteDataRef(baro_ref, target / HPA_PER_INHG)
+    baro_target[baro_ref] = (target, now)
+    return True
+
+
 def fcu_button_event(xp):
     #print(f'events: press: {buttons_press_event}, release: {buttons_release_event}')
     for b in buttonlist:
@@ -555,8 +598,9 @@ def fcu_button_event(xp):
                     print(f'set dataref {b.dataref} from {bool(val)} to {not bool(val)}')
                     xp.WriteDataRef(b.dataref, not bool(val))
                 elif b.dreftype== DREF_TYPE.CMD:
-                    print(f'send command {b.dataref}')
-                    xp.SendCommand(b.dataref)
+                    if not baro_hpa_click(xp, b.label):
+                        print(f'send command {b.dataref}')
+                        xp.SendCommand(b.dataref)
             elif b.type == BUTTON.SWITCH:
                 val = datacache[b.dataref]
                 if b.dreftype== DREF_TYPE.DATA:
