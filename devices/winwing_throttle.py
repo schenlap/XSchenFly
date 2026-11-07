@@ -7,7 +7,10 @@ from time import sleep
 import time
 
 import struct
-import uinput
+try:
+    import uinput  # Linux only (virtual joystick for the Ursa Minor throttle)
+except ImportError:
+    uinput = None
 
 import xp_websocket
 
